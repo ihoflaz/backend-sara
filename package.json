@@ -4,7 +4,9 @@
   "description": "Backend for a messaging app using Express and MongoDB",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "build": "npm install",
+    "vercel-build": "npm install"
   },
   "dependencies": {
     "express": "^4.18.2",
