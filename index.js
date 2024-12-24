@@ -6,7 +6,11 @@ const cors = require('cors');
 const app = express();
 
 // CORS ayarları
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:3002', // Frontend'inizin adresi
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], // İzin verilen HTTP metotları
+    allowedHeaders: ['Content-Type', 'Authorization'] // İzin verilen header'lar
+  }));
 
 // Mongoose deprecation warning'i kaldır
 mongoose.set('strictQuery', false);
