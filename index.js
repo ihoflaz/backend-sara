@@ -19,7 +19,12 @@ mongoose.set('strictQuery', false);
 app.use(bodyParser.json());
 
 // MongoDB Atlas bağlantısı
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/messagingApp';
+let MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/messagingApp';
+
+// Eğer connection string'de veritabanı adı yoksa ekle
+if (!MONGODB_URI.includes('/messagingApp') && !MONGODB_URI.includes('localhost')) {
+    MONGODB_URI += '/messagingApp';
+}
 
 mongoose.connect(MONGODB_URI, { 
     useNewUrlParser: true, 
