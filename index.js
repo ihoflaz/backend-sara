@@ -21,22 +21,36 @@ app.use(bodyParser.json());
 // MongoDB Atlas bağlantısı
 let MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/messagingApp';
 
-// Eğer connection string'de veritabanı adı yoksa ekle
-// if (!MONGODB_URI.includes('/messagingApp') && !MONGODB_URI.includes('localhost')) {
-//     MONGODB_URI += '/messagingApp';
-// }
+const connectWithRetry = () => {
+    console.log('MongoDB bağlantısı deneniyor...');
+    mongoose.connect(MONGODB_URI, { 
+        useNewUrlParser: true, 
+        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 30000, // Timeout süresini artır
+        socketTimeoutMS: 45000,
+        family: 4,
+        retryWrites: true,
+        w: 'majority'
+    })
+    .then(() => {
+        console.log('MongoDB connected successfully');
+        console.log('Database Name:', mongoose.connection.name);
+    })
+    .catch(err => {
+        console.error('MongoDB connection error:', err);
+        console.error('Connection string:', MONGODB_URI.replace(/\/\/[^:]+:[^@]+@/, '//***:***@'));
+        console.log('5 saniye sonra tekrar denenecek...');
+        setTimeout(connectWithRetry, 5000); // 5 saniye sonra tekrar dene
+    });
+};
 
-mongoose.connect(MONGODB_URI, { 
-    useNewUrlParser: true, 
-    useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 5000,
-    socketTimeoutMS: 45000,
-    family: 4
-})
-.then(() => console.log('MongoDB connected successfully'))
-.catch(err => {
-    console.error('MongoDB connection error:', err);
-    console.error('Connection string:', MONGODB_URI.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')); // Credentials'ları gizle
+// İlk bağlantıyı başlat
+connectWithRetry();
+
+// Bağlantı koptuğunda tekrar bağlan
+mongoose.connection.on('disconnected', () => {
+    console.log('MongoDB bağlantısı koptu. Tekrar bağlanılıyor...');
+    connectWithRetry();
 });
 
 // Define routes
