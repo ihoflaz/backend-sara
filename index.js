@@ -10,7 +10,7 @@ app.use(cors({
     origin: 'http://localhost:3002', // Frontend'inizin adresi
     methods: ['GET', 'POST', 'PUT', 'DELETE'], // İzin verilen HTTP metotları
     allowedHeaders: ['Content-Type', 'Authorization'] // İzin verilen header'lar
-  }));
+}));
 
 // Mongoose deprecation warning'i kaldır
 mongoose.set('strictQuery', false);
@@ -23,8 +23,8 @@ let MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/messagin
 
 const connectWithRetry = () => {
     console.log('MongoDB bağlantısı deneniyor...');
-    mongoose.connect(MONGODB_URI, { 
-        useNewUrlParser: true, 
+    mongoose.connect(MONGODB_URI, {
+        useNewUrlParser: true,
         useUnifiedTopology: true,
         serverSelectionTimeoutMS: 30000, // Timeout süresini artır
         socketTimeoutMS: 45000,
@@ -32,16 +32,16 @@ const connectWithRetry = () => {
         retryWrites: true,
         w: 'majority'
     })
-    .then(() => {
-        console.log('MongoDB connected successfully');
-        console.log('Database Name:', mongoose.connection.name);
-    })
-    .catch(err => {
-        console.error('MongoDB connection error:', err);
-        console.error('Connection string:', MONGODB_URI.replace(/\/\/[^:]+:[^@]+@/, '//***:***@'));
-        console.log('5 saniye sonra tekrar denenecek...');
-        setTimeout(connectWithRetry, 5000); // 5 saniye sonra tekrar dene
-    });
+        .then(() => {
+            console.log('MongoDB connected successfully');
+            console.log('Database Name:', mongoose.connection.name);
+        })
+        .catch(err => {
+            console.error('MongoDB connection error:', err);
+            console.error('Connection string:', MONGODB_URI.replace(/\/\/[^:]+:[^@]+@/, '//***:***@'));
+            console.log('5 saniye sonra tekrar denenecek...');
+            setTimeout(connectWithRetry, 5000); // 5 saniye sonra tekrar dene
+        });
 };
 
 // İlk bağlantıyı başlat
