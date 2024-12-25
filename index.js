@@ -28,10 +28,16 @@ let MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/messagin
 
 mongoose.connect(MONGODB_URI, { 
     useNewUrlParser: true, 
-    useUnifiedTopology: true 
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+    family: 4
 })
-.then(() => console.log('MongoDB connected'))
-.catch(err => console.error('MongoDB connection error:', err));
+.then(() => console.log('MongoDB connected successfully'))
+.catch(err => {
+    console.error('MongoDB connection error:', err);
+    console.error('Connection string:', MONGODB_URI.replace(/\/\/[^:]+:[^@]+@/, '//***:***@')); // Credentials'ları gizle
+});
 
 // Define routes
 app.use('/api/users', require('./routes/users'));
