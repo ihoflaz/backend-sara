@@ -51,6 +51,14 @@ const UserSchema = new mongoose.Schema({
   isRegistrationComplete: {
     type: Boolean,
     default: false
+  },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
+  },
+  refreshToken: {
+    type: String
   }
 }, {
   timestamps: true

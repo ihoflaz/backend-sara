@@ -55,6 +55,8 @@ mongoose.connection.on('disconnected', () => {
 
 // Define routes
 app.use('/api/users', require('./routes/users'));
+app.use('/api/auth', require('./routes/auth').router);
+app.use('/api/admin', require('./routes/admin'));
 
 // Health check endpoint
 app.get('/health', (req, res) => {

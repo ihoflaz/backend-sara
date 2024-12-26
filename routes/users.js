@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const { sendVerificationSMS, verifyCode } = require('../utils/smsUtil');
+const { verifyToken } = require('../middleware/authMiddleware');
+const { createTokens } = require('./auth');
 
 // Create a user
 router.post('/', async (req, res) => {
@@ -92,7 +94,6 @@ router.post('/verify-code', async (req, res) => {
         let user = await User.findOne({ phoneNumber });
         
         if (!user) {
-            // Yeni kullanıcı oluştur
             user = new User({
                 phoneNumber,
                 isVerified: true
@@ -103,9 +104,20 @@ router.post('/verify-code', async (req, res) => {
             await user.save();
         }
 
+        // JWT token'ları oluştur
+        const tokens = createTokens(user);
+        await User.findByIdAndUpdate(user._id, { refreshToken: tokens.refreshToken });
+
         res.json({
             success: true,
             isRegistered: user.isRegistrationComplete,
+            ...tokens,
+            user: {
+                id: user._id,
+                phoneNumber: user.phoneNumber,
+                isVerified: user.isVerified,
+                role: user.role
+            },
             verificationSid: verificationResult.sid,
             status: verificationResult.status,
             message: 'Doğrulama başarılı'
@@ -181,6 +193,16 @@ router.post('/complete-registration', async (req, res) => {
             error: error.message
         });
     }
+});
+
+// Kullanıcı profili
+router.get('/profile', verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-refreshToken');
+    res.json({ success: true, user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 module.exports = router;
