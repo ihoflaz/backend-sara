@@ -126,3 +126,10 @@ npm start
 ## Lisans
 
 Bu proje MIT lisansı altında lisanslanmıştır.
+
+## Dokümantasyon
+
+- [API Dokümantasyonu](docs/API.md)
+- [Model Açıklamaları](docs/MODELS.md)
+- [Socket.IO Kullanımı](docs/SOCKET.md)
+- [Değişiklik Geçmişi](docs/CHANGELOG.md)

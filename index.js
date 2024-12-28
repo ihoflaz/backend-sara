@@ -3,12 +3,14 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpecs = require('./swagger');
 const app = express();
 
 // CORS ayarları
 app.use(cors({
     origin: 'http://localhost:3002', // Frontend'inizin adresi
-    methods: ['GET', 'POST', 'PUT', 'DELETE'], // İzin verilen HTTP metotları
+    methods: ['GET', 'POST', 'PUT', 'DELETE', "PATCH", "OPTIONS", "HEAD", "CONNECT", "TRACE"], // İzin verilen HTTP metotları
     allowedHeaders: ['Content-Type', 'Authorization'] // İzin verilen header'lar
 }));
 
@@ -17,6 +19,9 @@ mongoose.set('strictQuery', false);
 
 // Middleware
 app.use(bodyParser.json());
+
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 // MongoDB Atlas bağlantısı
 let MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/messagingApp';
@@ -57,6 +62,8 @@ mongoose.connection.on('disconnected', () => {
 app.use('/api/users', require('./routes/users'));
 app.use('/api/auth', require('./routes/auth').router);
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/messages', require('./routes/messages'));
+app.use('/api/groups', require('./routes/groups'));
 
 // Health check endpoint
 app.get('/health', (req, res) => {

@@ -1,0 +1,110 @@
+{
+  "info": {
+    "_postman_id": "1234567-89ab-cdef-0123-456789abcdef",
+    "name": "SA-RA Tour Guide API",
+    "description": "SA-RA Tur Rehberi Uygulaması API Koleksiyonu",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Check Phone",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/check-phone",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "check-phone"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"phoneNumber\": \"+905551234567\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Verify Code",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/verify-code",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "verify-code"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"phoneNumber\": \"+905551234567\",\n    \"code\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Complete Registration",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/complete-registration",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "complete-registration"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+} 

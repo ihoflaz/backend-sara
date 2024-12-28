@@ -1,0 +1,42 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "SA-RA Tour Guide API",
+    "version": "1.0.0",
+    "description": "SA-RA Tur Rehberi Uygulaması API Dokümantasyonu"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Geliştirme Ortamı"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Kimlik doğrulama işlemleri"
+    },
+    {
+      "name": "Users",
+      "description": "Kullanıcı işlemleri"
+    },
+    {
+      "name": "Groups",
+      "description": "Tur grubu işlemleri"
+    },
+    {
+      "name": "Messages",
+      "description": "Mesajlaşma işlemleri"
+    }
+  ],
+  "paths": {}
+} 
