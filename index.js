@@ -21,16 +21,8 @@ mongoose.set('strictQuery', false);
 // Middleware
 app.use(bodyParser.json());
 
-// Serve static files
-app.use('/api-docs', express.static(require('swagger-ui-dist').absolutePath(), {
-    setHeaders: (res, path) => {
-        if (path.endsWith('.css')) {
-            res.set('Content-Type', 'text/css');
-        } else if (path.endsWith('.js')) {
-            res.set('Content-Type', 'application/javascript');
-        }
-    }
-}));
+// Serve static files from public directory
+app.use(express.static('public'));
 
 // Swagger UI options
 const swaggerOptions = {

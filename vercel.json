@@ -4,42 +4,28 @@
         {
             "src": "index.js",
             "use": "@vercel/node"
+        },
+        {
+            "src": "public/**",
+            "use": "@vercel/static"
         }
     ],
     "routes": [
         {
-            "src": "/api-docs/(.*)\\.css",
-            "dest": "index.js",
-            "headers": {
-                "Content-Type": "text/css; charset=utf-8"
-            }
-        },
-        {
-            "src": "/api-docs/(.*)\\.js",
-            "dest": "index.js",
-            "headers": {
-                "Content-Type": "application/javascript; charset=utf-8"
-            }
-        },
-        {
-            "src": "/api-docs/(.*)",
-            "dest": "index.js",
-            "headers": {
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
-                "Access-Control-Allow-Headers": "X-Requested-With, Content-Type, Authorization"
-            }
+            "src": "/api-docs",
+            "dest": "index.js"
         },
         {
             "src": "/swagger.json",
-            "dest": "index.js",
-            "headers": {
-                "Content-Type": "application/json"
-            }
+            "dest": "index.js"
         },
         {
             "src": "/api/(.*)",
             "dest": "index.js"
+        },
+        {
+            "src": "/public/(.*)",
+            "dest": "/public/$1"
         },
         {
             "src": "/(.*)",
