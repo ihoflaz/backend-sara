@@ -23,9 +23,14 @@ app.use(bodyParser.json());
 
 // Swagger UI options
 const swaggerOptions = {
-    explorer: true,
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "SA-RA Tour Guide API",
     swaggerOptions: {
-        url: '/swagger.json'
+        persistAuthorization: true,
+        displayRequestDuration: true,
+        docExpansion: 'none',
+        filter: true,
+        tryItOutEnabled: true
     }
 };
 
@@ -34,6 +39,9 @@ app.get('/swagger.json', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.send(swaggerSpecs);
 });
+
+// Serve Swagger UI static files
+app.use('/api-docs', express.static(require('swagger-ui-dist').getAbsoluteFSPath()));
 
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve);

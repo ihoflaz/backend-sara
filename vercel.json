@@ -8,23 +8,47 @@
     ],
     "routes": [
         {
+            "src": "/api-docs/swagger-ui.css",
+            "dest": "/node_modules/swagger-ui-dist/swagger-ui.css"
+        },
+        {
+            "src": "/api-docs/swagger-ui-bundle.js",
+            "dest": "/node_modules/swagger-ui-dist/swagger-ui-bundle.js"
+        },
+        {
+            "src": "/api-docs/swagger-ui-standalone-preset.js",
+            "dest": "/node_modules/swagger-ui-dist/swagger-ui-standalone-preset.js"
+        },
+        {
+            "src": "/api-docs/swagger-ui-init.js",
+            "dest": "/node_modules/swagger-ui-dist/swagger-ui-init.js"
+        },
+        {
             "src": "/api-docs",
-            "dest": "/index.js"
+            "dest": "index.js"
         },
         {
             "src": "/swagger.json",
-            "dest": "/index.js"
+            "dest": "index.js"
         },
         {
             "src": "/api/(.*)",
-            "dest": "/index.js"
+            "dest": "index.js"
         },
         {
             "src": "/(.*)",
-            "dest": "/index.js"
+            "dest": "index.js"
         }
     ],
-    "env": {
-        "NODE_ENV": "production"
-    }
+    "headers": [
+        {
+            "source": "/api-docs/(.*)",
+            "headers": [
+                { "key": "Access-Control-Allow-Origin", "value": "*" },
+                { "key": "Access-Control-Allow-Methods", "value": "GET, POST, PUT, DELETE, PATCH, OPTIONS" },
+                { "key": "Access-Control-Allow-Headers", "value": "X-Requested-With, Content-Type, Authorization" },
+                { "key": "Content-Type", "value": "application/javascript; charset=utf-8" }
+            ]
+        }
+    ]
 }

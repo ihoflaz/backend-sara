@@ -14,12 +14,12 @@ const options = {
         },
         servers: [
             {
-                url: 'https://backend-sara.vercel.app',
-                description: 'Production Server'
-            },
-            {
-                url: 'http://localhost:5001',
-                description: 'Development Server'
+                url: process.env.NODE_ENV === 'production' 
+                    ? 'https://backend-sara.vercel.app'
+                    : 'http://localhost:5001',
+                description: process.env.NODE_ENV === 'production' 
+                    ? 'Production Server' 
+                    : 'Development Server'
             }
         ],
         components: {
