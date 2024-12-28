@@ -4,7 +4,7 @@ const options = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'SA-RA Tour Guide API',
+            title: 'SA-RA API',
             version: '2.0.0',
             description: 'Bluetooth mesajlaşma ve grup yönetimi için RESTful API',
             contact: {
