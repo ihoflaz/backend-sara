@@ -40,6 +40,17 @@ app.use(bodyParser.json());
 // Serve static files from public directory
 app.use(express.static('public'));
 
+// Swagger UI static files
+app.use('/api-docs', express.static('public/swagger-ui', {
+    setHeaders: (res, path) => {
+        if (path.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css');
+        } else if (path.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript');
+        }
+    }
+}));
+
 // Swagger UI options
 const swaggerOptions = {
     explorer: true,
