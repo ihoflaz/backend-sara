@@ -4,22 +4,16 @@ const options = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'SA-RA API',
-            version: '2.0.0',
-            description: 'Bluetooth mesajlaşma ve grup yönetimi için RESTful API',
-            contact: {
-                name: 'API Desteği',
-                email: 'your-email@example.com'
-            }
+            title: 'SA-RA Tour Guide API',
+            version: '1.0.0',
+            description: 'SA-RA Tur Rehberi Uygulaması API Dokümantasyonu'
         },
         servers: [
             {
                 url: process.env.NODE_ENV === 'production' 
                     ? 'https://backend-sara.vercel.app'
-                    : 'http://localhost:5001',
-                description: process.env.NODE_ENV === 'production' 
-                    ? 'Production Server' 
-                    : 'Development Server'
+                    : 'http://localhost:3000',
+                description: process.env.NODE_ENV === 'production' ? 'Production Server' : 'Development Server'
             }
         ],
         components: {
@@ -38,6 +32,6 @@ const options = {
     apis: ['./routes/*.js']
 };
 
-const specs = swaggerJsdoc(options);
+const swaggerSpecs = swaggerJsdoc(options);
 
-module.exports = specs; 
+module.exports = swaggerSpecs; 

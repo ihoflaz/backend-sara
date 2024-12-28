@@ -24,22 +24,24 @@ app.use(bodyParser.json());
 // Serve static files from public directory
 app.use(express.static('public'));
 
-// Swagger UI options
-const swaggerOptions = {
-    customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: "SA-RA Tour Guide API",
+// Swagger UI setup
+const swaggerUiOptions = {
+    explorer: true,
     swaggerOptions: {
-        persistAuthorization: true,
-        displayRequestDuration: true,
-        docExpansion: 'none',
-        filter: true,
-        tryItOutEnabled: true
+        url: '/swagger.json',
+        persistAuthorization: true
     }
 };
 
+// Serve swagger.json
+app.get('/swagger.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpecs);
+});
+
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve);
-app.get('/api-docs', swaggerUi.setup(swaggerSpecs, swaggerOptions));
+app.get('/api-docs', swaggerUi.setup(swaggerSpecs, swaggerUiOptions));
 
 // MongoDB Atlas bağlantısı
 let MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/messagingApp';
