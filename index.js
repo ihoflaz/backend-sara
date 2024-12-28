@@ -23,19 +23,21 @@ app.use(bodyParser.json());
 
 // Swagger UI options
 const swaggerOptions = {
-    customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: "SA-RA Tour Guide API",
-    customfavIcon: "/favicon.ico",
+    explorer: true,
     swaggerOptions: {
-        persistAuthorization: true,
-        displayRequestDuration: true,
-        docExpansion: 'none',
-        filter: true
+        url: '/swagger.json'
     }
 };
 
+// Serve swagger docs
+app.get('/swagger.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpecs);
+});
+
 // Swagger UI
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, swaggerOptions));
+app.use('/api-docs', swaggerUi.serve);
+app.get('/api-docs', swaggerUi.setup(swaggerSpecs, swaggerOptions));
 
 // MongoDB Atlas bağlantısı
 let MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/messagingApp';

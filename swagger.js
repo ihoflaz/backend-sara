@@ -14,12 +14,8 @@ const options = {
         },
         servers: [
             {
-                url: process.env.NODE_ENV === 'production' 
-                    ? 'https://backend-sa-ra.vercel.app'
-                    : 'http://localhost:5001',
-                description: process.env.NODE_ENV === 'production' 
-                    ? 'Production sunucusu' 
-                    : 'Geliştirme sunucusu'
+                url: '/',
+                description: 'Mevcut sunucu'
             }
         ],
         components: {
