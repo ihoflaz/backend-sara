@@ -17,31 +17,26 @@ const { createTokens } = require('./auth');
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - phoneNumber
- *             properties:
- *               phoneNumber:
- *                 type: string
- *                 description: +90 ile başlayan 10 haneli numara
+ *             $ref: '#/components/schemas/PhoneCheckRequest'
  *     responses:
  *       200:
  *         description: Başarılı
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 exists:
- *                   type: boolean
- *                 verificationSid:
- *                   type: string
- *                 status:
- *                   type: string
- *                 message:
- *                   type: string
+ *               $ref: '#/components/schemas/PhoneCheckResponse'
+ *       400:
+ *         description: Geçersiz istek
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       429:
+ *         description: Rate limit aşıldı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/check-phone', async (req, res) => {
     try {
@@ -90,34 +85,26 @@ router.post('/check-phone', async (req, res) => {
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - phoneNumber
- *               - code
- *             properties:
- *               phoneNumber:
- *                 type: string
- *               code:
- *                 type: string
- *                 description: 6 haneli kod
+ *             $ref: '#/components/schemas/VerifyCodeRequest'
  *     responses:
  *       200:
  *         description: Başarılı
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 isRegistered:
- *                   type: boolean
- *                 accessToken:
- *                   type: string
- *                 refreshToken:
- *                   type: string
- *                 user:
- *                   $ref: '#/components/schemas/User'
+ *               $ref: '#/components/schemas/VerifyCodeResponse'
+ *       400:
+ *         description: Geçersiz istek
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       429:
+ *         description: Rate limit aşıldı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/verify-code', async (req, res) => {
     try {
@@ -188,32 +175,10 @@ router.post('/verify-code', async (req, res) => {
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - firstName
- *               - lastName
- *             properties:
- *               firstName:
- *                 type: string
- *                 description: min 2, max 50 karakter
- *               lastName:
- *                 type: string
- *                 description: min 2, max 50 karakter
- *               email:
- *                 type: string
- *                 format: email
- *               birthDate:
- *                 type: string
- *                 format: date
- *               gender:
- *                 type: string
- *                 enum: [Erkek, Kadın, Diğer]
- *               avatar:
- *                 type: string
- *                 format: uri
+ *             $ref: '#/components/schemas/CompleteRegistrationRequest'
  *     responses:
  *       200:
- *         description: Başar��lı
+ *         description: Başarılı
  *         content:
  *           application/json:
  *             schema:
@@ -221,8 +186,21 @@ router.post('/verify-code', async (req, res) => {
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 user:
  *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Geçersiz istek
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Kimlik doğrulama hatası
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/complete-registration', verifyToken, async (req, res) => {
     try {
@@ -462,7 +440,7 @@ router.put('/profile', verifyToken, async (req, res) => {
  * /api/users/account:
  *   delete:
  *     summary: Hesap sil
- *     description: Kullanıcı hesabın�� siler
+ *     description: Kullanıcı hesabını siler
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []

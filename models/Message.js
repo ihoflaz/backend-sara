@@ -1,64 +1,69 @@
 const mongoose = require('mongoose');
 
 const messageSchema = new mongoose.Schema({
-    sender: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+    localMessageId: {
+        type: String,
+        required: true,
+        unique: true,
+        description: 'İstemci tarafında oluşturulan benzersiz mesaj ID\'si'
     },
     groupId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'TourGroup',
-        required: true
+        required: true,
+        description: 'Mesajın ait olduğu grup ID\'si'
+    },
+    sender: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+        description: 'Mesajı gönderen kullanıcı ID\'si'
     },
     content: {
         type: String,
-        required: true
+        required: true,
+        description: 'Mesaj içeriği'
     },
-    messageType: {
+    type: {
         type: String,
-        enum: ['text', 'image', 'file', 'location'],
-        default: 'text'
+        enum: ['text', 'image', 'location'],
+        default: 'text',
+        description: 'Mesaj tipi'
     },
-    fileUrl: String,
-    location: {
-        latitude: Number,
-        longitude: Number
-    },
-    localMessageId: {
+    status: {
         type: String,
-        required: true
+        enum: ['sent', 'delivered', 'read', 'failed'],
+        default: 'sent',
+        description: 'Mesaj durumu'
     },
     sentAt: {
         type: Date,
-        required: true
+        required: true,
+        description: 'Mesajın gönderilme zamanı (istemci saati)'
     },
     syncedAt: {
         type: Date,
-        default: null
+        default: Date.now,
+        description: 'Mesajın sunucuya senkronize edilme zamanı'
     },
     readBy: [{
-        user: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User'
-        },
-        readAt: {
-            type: Date,
-            default: Date.now
-        }
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        description: 'Mesajı okuyan kullanıcılar'
     }],
-    status: {
-        type: String,
-        enum: ['pending', 'sent', 'delivered', 'failed'],
-        default: 'pending'
+    metadata: {
+        type: mongoose.Schema.Types.Mixed,
+        description: 'Mesaj tipine göre ek bilgiler (konum için lat/lng, resim için URL gibi)'
     }
 }, {
     timestamps: true
 });
 
-// Bileşik indeks oluşturma
-messageSchema.index({ groupId: 1, sentAt: -1 });
-messageSchema.index({ localMessageId: 1, sender: 1 }, { unique: true });
+// Indexler
+messageSchema.index({ localMessageId: 1 });
+messageSchema.index({ groupId: 1, sentAt: 1 });
+messageSchema.index({ sender: 1 });
+messageSchema.index({ status: 1 });
 
 const Message = mongoose.model('Message', messageSchema);
 

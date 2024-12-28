@@ -60,12 +60,13 @@ const { verifyToken } = require('../middleware/authMiddleware');
  *         required: true
  *         schema:
  *           type: string
+ *         description: Grup ID
  *       - in: query
  *         name: lastSyncTime
  *         schema:
  *           type: string
  *           format: date-time
- *         description: Son senkronizasyon zamanı
+ *         description: Son senkronizasyon zamanı (ISO 8601 formatında)
  *     responses:
  *       200:
  *         description: Başarılı
@@ -76,44 +77,29 @@ const { verifyToken } = require('../middleware/authMiddleware');
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 messages:
  *                   type: array
  *                   items:
- *                     type: object
- *                     properties:
- *                       _id:
- *                         type: string
- *                       localMessageId:
- *                         type: string
- *                       groupId:
- *                         type: string
- *                       sender:
- *                         type: object
- *                         properties:
- *                           _id:
- *                             type: string
- *                           firstName:
- *                             type: string
- *                           lastName:
- *                             type: string
- *                           phoneNumber:
- *                             type: string
- *                       content:
- *                         type: string
- *                       type:
- *                         type: string
- *                         enum: [text, image, location, file]
- *                       status:
- *                         type: string
- *                         enum: [sent, delivered, read, failed]
- *                       sentAt:
- *                         type: string
- *                         format: date-time
- *                       syncedAt:
- *                         type: string
- *                         format: date-time
- *                       metadata:
- *                         type: object
+ *                     $ref: '#/components/schemas/Message'
+ *       401:
+ *         description: Kimlik doğrulama hatası
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Yetkilendirme hatası
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Grup bulunamadı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get('/groups/:groupId/messages', verifyToken, async (req, res) => {
     try {
@@ -202,18 +188,24 @@ router.get('/groups/:groupId/messages', verifyToken, async (req, res) => {
  *                   properties:
  *                     localMessageId:
  *                       type: string
+ *                       description: İstemci tarafında oluşturulan benzersiz mesaj ID'si
  *                     groupId:
  *                       type: string
+ *                       description: Mesajın ait olduğu grup ID'si
  *                     content:
  *                       type: string
+ *                       description: Mesaj içeriği
  *                     type:
  *                       type: string
- *                       enum: [text, image, location, file]
+ *                       enum: [text, image, location]
+ *                       description: Mesaj tipi
  *                     sentAt:
  *                       type: string
  *                       format: date-time
+ *                       description: Mesajın gönderilme zamanı (ISO 8601 formatında)
  *                     metadata:
  *                       type: object
+ *                       description: Mesaj tipine göre ek bilgiler (konum için lat/lng, resim için URL gibi)
  *     responses:
  *       200:
  *         description: Başarılı
@@ -224,33 +216,29 @@ router.get('/groups/:groupId/messages', verifyToken, async (req, res) => {
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 syncedMessages:
  *                   type: array
  *                   items:
- *                     type: object
- *                     properties:
- *                       _id:
- *                         type: string
- *                       localMessageId:
- *                         type: string
- *                       groupId:
- *                         type: string
- *                       sender:
- *                         type: object
- *                       content:
- *                         type: string
- *                       type:
- *                         type: string
- *                       status:
- *                         type: string
- *                       sentAt:
- *                         type: string
- *                         format: date-time
- *                       syncedAt:
- *                         type: string
- *                         format: date-time
- *                       metadata:
- *                         type: object
+ *                     $ref: '#/components/schemas/Message'
+ *       400:
+ *         description: Geçersiz istek
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Kimlik doğrulama hatası
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Yetkilendirme hatası
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/sync', verifyToken, async (req, res) => {
     try {
@@ -321,14 +309,12 @@ router.post('/sync', verifyToken, async (req, res) => {
  *             type: object
  *             required:
  *               - messageIds
- *               - groupId
  *             properties:
  *               messageIds:
  *                 type: array
  *                 items:
  *                   type: string
- *               groupId:
- *                 type: string
+ *                 description: Okundu olarak işaretlenecek mesaj ID'leri
  *     responses:
  *       200:
  *         description: Başarılı
@@ -339,53 +325,84 @@ router.post('/sync', verifyToken, async (req, res) => {
  *               properties:
  *                 success:
  *                   type: boolean
- *                 readAt:
+ *                   example: true
+ *                 message:
  *                   type: string
- *                   format: date-time
+ *                   example: Mesajlar okundu olarak işaretlendi
+ *       400:
+ *         description: Geçersiz istek
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Kimlik doğrulama hatası
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Yetkilendirme hatası
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/read', verifyToken, async (req, res) => {
     try {
-        const { messageIds, groupId } = req.body;
+        const { messageIds } = req.body;
 
-        // Grup üyeliği kontrolü
-        const group = await TourGroup.findOne({
-            _id: groupId,
+        if (!Array.isArray(messageIds) || messageIds.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Geçersiz mesaj ID listesi'
+            });
+        }
+
+        // Mesajları bul ve grup üyeliği kontrolü yap
+        const messages = await Message.find({ _id: { $in: messageIds } });
+        
+        // Grup ID'lerini topla
+        const groupIds = [...new Set(messages.map(msg => msg.groupId.toString()))];
+        
+        // Kullanıcının bu gruplara üye olup olmadığını kontrol et
+        const groups = await TourGroup.find({
+            _id: { $in: groupIds },
             $or: [
                 { guide: req.user.id },
                 { 'members.user': req.user.id, 'members.status': 'active' }
             ]
         });
 
-        if (!group) {
+        const allowedGroupIds = groups.map(g => g._id.toString());
+
+        // Sadece erişim yetkisi olan gruplardaki mesajları güncelle
+        const messagesToUpdate = messages.filter(msg => 
+            allowedGroupIds.includes(msg.groupId.toString())
+        );
+
+        if (messagesToUpdate.length === 0) {
             return res.status(403).json({
                 success: false,
-                message: 'Bu grubun mesajlarına erişim yetkiniz yok'
+                message: 'Bu mesajları okuma yetkiniz yok'
             });
         }
 
-        const readAt = new Date();
-
         // Mesajları okundu olarak işaretle
         await Message.updateMany(
-            {
-                _id: { $in: messageIds },
-                groupId,
-                sender: { $ne: req.user.id } // Kendi mesajlarını okundu olarak işaretleyemez
-            },
-            {
-                $set: {
-                    status: 'read',
-                    readAt
-                }
+            { _id: { $in: messagesToUpdate.map(m => m._id) } },
+            { 
+                $set: { status: 'read' },
+                $addToSet: { readBy: req.user.id }
             }
         );
 
         res.json({
             success: true,
-            readAt
+            message: 'Mesajlar okundu olarak işaretlendi'
         });
     } catch (error) {
-        console.error('Mesaj okundu işaretleme hatası:', error);
+        console.error('Mesaj okuma hatası:', error);
         res.status(500).json({
             success: false,
             message: 'Mesajlar okundu olarak işaretlenirken bir hata oluştu',

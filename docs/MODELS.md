@@ -138,72 +138,108 @@ const groupExample = {
 
 ## Message Model
 
-Mesajlaşma sistemini yöneten model.
+Mesajlaşma verilerini tutan model.
 
-```typescript
-interface Message {
-    // İlişki Bilgileri
-    sender: string;        // Zorunlu, User referansı
-    groupId: string;      // Zorunlu, TourGroup referansı
-    
-    // Mesaj Bilgileri
-    content: string;       // Zorunlu, mesaj içeriği
-    messageType: 'text' | 'image' | 'file' | 'location';  // Varsayılan: 'text'
-    localMessageId: string; // Zorunlu, istemci tarafında oluşturulan benzersiz ID
-    
-    // Dosya/Konum Bilgileri
-    fileUrl?: string;     // Dosya/resim URL'i
-    location?: {          // Konum bilgisi
-        latitude: number;
-        longitude: number;
-    };
-    
-    // Durum Bilgileri
-    status: 'pending' | 'sent' | 'delivered' | 'failed';  // Varsayılan: 'pending'
-    sentAt: Date;        // Zorunlu, istemci saatine göre gönderim zamanı
-    syncedAt?: Date;     // Sunucu ile senkronizasyon zamanı, varsayılan: null
-    
-    // Okunma Bilgileri
-    readBy: [{
-        user: string;    // User referansı
-        readAt: Date;    // Varsayılan: Date.now
-    }];
+## Şema
 
-    // Zaman Bilgileri
-    createdAt: Date;
-    updatedAt: Date;
+```javascript
+{
+  localMessageId: {
+    type: String,
+    required: true,
+    unique: true,
+    description: 'İstemci tarafında oluşturulan benzersiz mesaj ID\'si'
+  },
+  groupId: {
+    type: ObjectId,
+    ref: 'TourGroup',
+    required: true,
+    description: 'Mesajın ait olduğu grup ID\'si'
+  },
+  sender: {
+    type: ObjectId,
+    ref: 'User',
+    required: true,
+    description: 'Mesajı gönderen kullanıcı ID\'si'
+  },
+  content: {
+    type: String,
+    required: true,
+    description: 'Mesaj içeriği'
+  },
+  type: {
+    type: String,
+    enum: ['text', 'image', 'location'],
+    default: 'text',
+    description: 'Mesaj tipi'
+  },
+  status: {
+    type: String,
+    enum: ['sent', 'delivered', 'read', 'failed'],
+    default: 'sent',
+    description: 'Mesaj durumu'
+  },
+  sentAt: {
+    type: Date,
+    required: true,
+    description: 'Mesajın gönderilme zamanı (istemci saati)'
+  },
+  syncedAt: {
+    type: Date,
+    default: Date.now,
+    description: 'Mesajın sunucuya senkronize edilme zamanı'
+  },
+  readBy: [{
+    type: ObjectId,
+    ref: 'User',
+    description: 'Mesajı okuyan kullanıcılar'
+  }],
+  metadata: {
+    type: Mixed,
+    description: 'Mesaj tipine göre ek bilgiler (konum için lat/lng, resim için URL gibi)'
+  }
 }
+```
 
-// İndeksler
-messageSchema.index({ groupId: 1, sentAt: -1 });
-messageSchema.index({ localMessageId: 1, sender: 1 }, { unique: true });
+## İndeksler
 
-// Örnek Kullanım:
-const messageExample = {
-    sender: "user_id",
-    groupId: "group_id",
-    content: "Merhaba grup!",
-    messageType: "text",
-    localMessageId: "client_generated_uuid",
-    status: "sent",
-    sentAt: new Date(),
-    syncedAt: new Date()
-};
+- `localMessageId`: Tekil indeks
+- `{ groupId: 1, sentAt: 1 }`: Bileşik indeks
+- `sender`: İndeks
+- `status`: İndeks
 
-// Konum mesajı örneği:
-const locationMessageExample = {
-    sender: "user_id",
-    groupId: "group_id",
-    content: "Buluşma noktası",
-    messageType: "location",
-    localMessageId: "client_generated_uuid",
-    location: {
-        latitude: 41.0082,
-        longitude: 28.9784
-    },
-    status: "sent",
-    sentAt: new Date()
-};
+## İlişkiler
+
+- `groupId` -> `TourGroup` modeli ile ilişkili
+- `sender` -> `User` modeli ile ilişkili
+- `readBy` -> `User` modeli ile ilişkili
+
+## Örnek Kullanım
+
+```javascript
+// Yeni mesaj oluşturma
+const message = new Message({
+  localMessageId: 'client-123',
+  groupId: '507f1f77bcf86cd799439011',
+  sender: '507f1f77bcf86cd799439012',
+  content: 'Merhaba!',
+  type: 'text',
+  sentAt: new Date()
+});
+
+// Mesaj okuma
+const messages = await Message.find({ groupId: '507f1f77bcf86cd799439011' })
+  .populate('sender', 'firstName lastName')
+  .sort('sentAt');
+
+// Mesajı okundu olarak işaretleme
+await Message.updateOne(
+  { _id: '507f1f77bcf86cd799439013' },
+  { 
+    $set: { status: 'read' },
+    $addToSet: { readBy: '507f1f77bcf86cd799439014' }
+  }
+);
 ```
 
 ## Notification Model

@@ -8,11 +8,26 @@ const swaggerSpecs = require('./swagger');
 const app = express();
 
 // CORS ayarları
+const allowedOrigins = [
+    'http://localhost:3002',
+    'https://backend-sara.vercel.app'
+];
+
 app.use(cors({
-    origin: ['http://localhost:3002', 'https://backend-sa-ra.vercel.app'], // Frontend ve Vercel adresleri
-    methods: ['GET', 'POST', 'PUT', 'DELETE', "PATCH", "OPTIONS", "HEAD", "CONNECT", "TRACE"],
+    origin: function (origin, callback) {
+        // allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) === -1) {
+            var msg = 'CORS policy için izin verilmeyen origin: ' + origin;
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', "PATCH", "OPTIONS", "HEAD"],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
+    credentials: true,
+    maxAge: 86400 // 24 saat
 }));
 
 // Mongoose deprecation warning'i kaldır
@@ -24,20 +39,9 @@ app.use(bodyParser.json());
 // Serve static files from public directory
 app.use(express.static('public'));
 
-// Swagger UI static files
-const swaggerUiAssetPath = require('swagger-ui-dist').getAbsoluteFSPath();
-app.use('/api-docs', express.static(swaggerUiAssetPath, {
-    setHeaders: (res, path) => {
-        if (path.endsWith('.css')) {
-            res.setHeader('Content-Type', 'text/css');
-        } else if (path.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript');
-        }
-    }
-}));
-
 // Swagger UI options
 const swaggerOptions = {
+    explorer: true,
     customCss: '.swagger-ui .topbar { display: none }',
     customSiteTitle: "SA-RA Tour Guide API",
     swaggerOptions: {
@@ -45,9 +49,19 @@ const swaggerOptions = {
         displayRequestDuration: true,
         docExpansion: 'none',
         filter: true,
+        showExtensions: true,
+        showCommonExtensions: true,
+        defaultModelsExpandDepth: 3,
+        defaultModelExpandDepth: 3,
         tryItOutEnabled: true
     }
 };
+
+// Serve swagger.json
+app.get('/swagger.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpecs);
+});
 
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve);

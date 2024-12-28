@@ -22,7 +22,7 @@ const { verifyToken, authorize } = require('../middleware/authMiddleware');
  *             properties:
  *               refreshToken:
  *                 type: string
- *                 description: Geçerli refresh token
+ *                 description: JWT refresh token
  *     responses:
  *       200:
  *         description: Başarılı
@@ -33,18 +33,31 @@ const { verifyToken, authorize } = require('../middleware/authMiddleware');
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 accessToken:
  *                   type: string
- *                   description: Yeni access token
+ *                   description: Yeni JWT access token
  *                 refreshToken:
  *                   type: string
- *                   description: Yeni refresh token
+ *                   description: Yeni JWT refresh token
  *       400:
  *         description: Geçersiz istek
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       401:
  *         description: Geçersiz refresh token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  *       403:
  *         description: Token süresi dolmuş
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/refresh-token', async (req, res) => {
     try {

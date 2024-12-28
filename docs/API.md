@@ -698,103 +698,145 @@ Response (200 OK):
 
 ## Mesajlaşma İşlemleri (Messages)
 
-### Grup Mesajlarını Getirme
+### Grup Mesajlarını Getir
+
+Belirtilen grubun mesajlarını getirir.
+
 ```http
 GET /api/messages/groups/{groupId}/messages
-Auth: Bearer Token
+```
 
-Response (200 OK):
+### Parametreler
+
+| Parametre | Tip | Konum | Zorunlu | Açıklama |
+|-----------|-----|--------|----------|-----------|
+| groupId | string | path | evet | Grup ID |
+| lastSyncTime | string | query | hayır | Son senkronizasyon zamanı (ISO 8601 formatında) |
+
+### Başarılı Yanıt
+
+```json
 {
-    "success": true,
-    "messages": [
-        {
-            "_id": "messageId",
-            "localMessageId": "localMessageId",
-            "groupId": "groupId",
-            "sender": {
-                "_id": "userId",
-                "firstName": "Ahmet",
-                "lastName": "Yılmaz",
-                "phoneNumber": "+905551234567"
-            },
-            "content": "Mesaj içeriği",
-            "type": "text",
-            "status": "sent",
-            "sentAt": "2024-01-20T15:30:00.000Z",
-            "syncedAt": "2024-01-20T15:30:00.000Z",
-            "metadata": {}
-        }
-    ]
+  "success": true,
+  "messages": [
+    {
+      "_id": "507f1f77bcf86cd799439011",
+      "localMessageId": "client-123",
+      "groupId": "507f1f77bcf86cd799439012",
+      "sender": {
+        "_id": "507f1f77bcf86cd799439013",
+        "firstName": "John",
+        "lastName": "Doe",
+        "phoneNumber": "+905551234567"
+      },
+      "content": "Merhaba!",
+      "type": "text",
+      "status": "sent",
+      "sentAt": "2024-01-20T10:00:00.000Z",
+      "syncedAt": "2024-01-20T10:00:01.000Z",
+      "readBy": ["507f1f77bcf86cd799439013"]
+    }
+  ]
 }
 ```
 
-### Mesajları Senkronize Etme
+### Hata Yanıtları
+
+| HTTP Kodu | Hata Kodu | Açıklama |
+|-----------|-----------|-----------|
+| 401 | UNAUTHORIZED | Kimlik doğrulama hatası |
+| 403 | FORBIDDEN | Yetkilendirme hatası |
+| 404 | NOT_FOUND | Grup bulunamadı |
+
+## Mesajları Senkronize Et
+
+Yerel mesajları sunucu ile senkronize eder.
+
 ```http
 POST /api/messages/sync
-Auth: Bearer Token
+```
 
-Request:
-{
-    "messages": [
-        {
-            "localMessageId": "localMessageId",
-            "groupId": "groupId",
-            "content": "Mesaj içeriği",
-            "type": "text",
-            "sentAt": "2024-01-20T15:30:00.000Z",
-            "metadata": {}
-        }
-    ]
-}
+### İstek Gövdesi
 
-Response (200 OK):
+```json
 {
-    "success": true,
-    "syncedMessages": [
-        {
-            "_id": "messageId",
-            "localMessageId": "localMessageId",
-            "groupId": "groupId",
-            "sender": {
-                "_id": "userId",
-                "firstName": "Ahmet",
-                "lastName": "Yılmaz",
-                "phoneNumber": "+905551234567"
-            },
-            "content": "Mesaj içeriği",
-            "type": "text",
-            "status": "sent",
-            "sentAt": "2024-01-20T15:30:00.000Z",
-            "syncedAt": "2024-01-20T15:30:00.000Z",
-            "metadata": {}
-        }
-    ]
+  "messages": [
+    {
+      "localMessageId": "client-123",
+      "groupId": "507f1f77bcf86cd799439012",
+      "content": "Merhaba!",
+      "type": "text",
+      "sentAt": "2024-01-20T10:00:00.000Z"
+    }
+  ]
 }
 ```
 
-### Mesajları Okundu Olarak İşaretleme
+### Başarılı Yanıt
+
+```json
+{
+  "success": true,
+  "syncedMessages": [
+    {
+      "_id": "507f1f77bcf86cd799439011",
+      "localMessageId": "client-123",
+      "groupId": "507f1f77bcf86cd799439012",
+      "sender": {
+        "_id": "507f1f77bcf86cd799439013",
+        "firstName": "John",
+        "lastName": "Doe"
+      },
+      "content": "Merhaba!",
+      "type": "text",
+      "status": "sent",
+      "sentAt": "2024-01-20T10:00:00.000Z",
+      "syncedAt": "2024-01-20T10:00:01.000Z"
+    }
+  ]
+}
+```
+
+### Hata Yanıtları
+
+| HTTP Kodu | Hata Kodu | Açıklama |
+|-----------|-----------|-----------|
+| 400 | INVALID_REQUEST | Geçersiz istek |
+| 401 | UNAUTHORIZED | Kimlik doğrulama hatası |
+| 403 | FORBIDDEN | Yetkilendirme hatası |
+
+## Mesajları Okundu Olarak İşaretle
+
+Belirtilen mesajları okundu olarak işaretler.
+
 ```http
 POST /api/messages/read
-Auth: Bearer Token
+```
 
-Request:
-{
-    "messageIds": ["messageId1", "messageId2"],  // Okundu olarak işaretlenecek mesaj ID'leri
-    "groupId": "groupId"  // Mesajların ait olduğu grup ID'si
-}
+### İstek Gövdesi
 
-Response (200 OK):
+```json
 {
-    "success": true,
-    "readAt": "2024-01-20T15:30:00.000Z"
-}
-
-Error Response (400):
-{
-    "success": false,
-    "message": "Geçersiz mesaj ID'leri"
+  "messageIds": ["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"]
 }
 ```
+
+### Başarılı Yanıt
+
+```json
+{
+  "success": true,
+  "message": "Mesajlar okundu olarak işaretlendi"
+}
+```
+
+### Hata Yanıtları
+
+| HTTP Kodu | Hata Kodu | Açıklama |
+|-----------|-----------|-----------|
+| 400 | INVALID_REQUEST | Geçersiz istek |
+| 401 | UNAUTHORIZED | Kimlik doğrulama hatası |
+| 403 | FORBIDDEN | Yetkilendirme hatası |
 
 ## Hata Durumları
 

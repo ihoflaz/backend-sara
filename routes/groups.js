@@ -23,14 +23,19 @@ const { verifyToken, authorize } = require('../middleware/authMiddleware');
  *             properties:
  *               name:
  *                 type: string
+ *                 minLength: 3
+ *                 maxLength: 100
  *               description:
  *                 type: string
+ *                 maxLength: 500
  *               startDate:
  *                 type: string
  *                 format: date-time
+ *                 description: ISO 8601 formatında başlangıç tarihi
  *               endDate:
  *                 type: string
  *                 format: date-time
+ *                 description: ISO 8601 formatında bitiş tarihi
  *     responses:
  *       200:
  *         description: Başarılı
@@ -41,8 +46,27 @@ const { verifyToken, authorize } = require('../middleware/authMiddleware');
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 group:
  *                   $ref: '#/components/schemas/TourGroup'
+ *       400:
+ *         description: Geçersiz istek
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Kimlik doğrulama hatası
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Yetkilendirme hatası
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/', verifyToken, authorize(['guide', 'admin']), async (req, res) => {
     try {
@@ -85,6 +109,7 @@ router.post('/', verifyToken, authorize(['guide', 'admin']), async (req, res) =>
  *         required: true
  *         schema:
  *           type: string
+ *         description: Grup ID
  *     requestBody:
  *       required: true
  *       content:
@@ -98,6 +123,7 @@ router.post('/', verifyToken, authorize(['guide', 'admin']), async (req, res) =>
  *                 type: array
  *                 items:
  *                   type: string
+ *                   description: Davet edilecek kullanıcıların ID'leri
  *     responses:
  *       200:
  *         description: Başarılı
@@ -108,10 +134,45 @@ router.post('/', verifyToken, authorize(['guide', 'admin']), async (req, res) =>
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 invitations:
  *                   type: array
  *                   items:
- *                     $ref: '#/components/schemas/Invitation'
+ *                     type: object
+ *                     properties:
+ *                       user:
+ *                         type: string
+ *                         description: Davet edilen kullanıcı ID'si
+ *                       status:
+ *                         type: string
+ *                         enum: [pending, accepted, rejected, expired]
+ *                       expiresAt:
+ *                         type: string
+ *                         format: date-time
+ *       400:
+ *         description: Geçersiz istek
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Kimlik doğrulama hatası
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Yetkilendirme hatası
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Grup bulunamadı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/:groupId/invite', verifyToken, authorize(['guide', 'admin']), async (req, res) => {
     try {
@@ -166,6 +227,7 @@ router.post('/:groupId/invite', verifyToken, authorize(['guide', 'admin']), asyn
  *         required: true
  *         schema:
  *           type: string
+ *         description: Grup ID
  *     responses:
  *       200:
  *         description: Başarılı
@@ -176,8 +238,28 @@ router.post('/:groupId/invite', verifyToken, authorize(['guide', 'admin']), asyn
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 message:
  *                   type: string
+ *                   example: Gruba başarıyla katıldınız
+ *       400:
+ *         description: Geçersiz istek veya davet süresi dolmuş
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Kimlik doğrulama hatası
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Grup veya davet bulunamadı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.post('/invitations/:groupId/accept', verifyToken, async (req, res) => {
     try {
@@ -248,10 +330,17 @@ router.post('/invitations/:groupId/accept', verifyToken, async (req, res) => {
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 groups:
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/TourGroup'
+ *       401:
+ *         description: Kimlik doğrulama hatası
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 router.get('/', verifyToken, async (req, res) => {
     try {
