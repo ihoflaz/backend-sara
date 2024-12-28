@@ -9,9 +9,10 @@ const app = express();
 
 // CORS ayarları
 app.use(cors({
-    origin: 'http://localhost:3002', // Frontend'inizin adresi
-    methods: ['GET', 'POST', 'PUT', 'DELETE', "PATCH", "OPTIONS", "HEAD", "CONNECT", "TRACE"], // İzin verilen HTTP metotları
-    allowedHeaders: ['Content-Type', 'Authorization'] // İzin verilen header'lar
+    origin: ['http://localhost:3002', 'https://backend-sa-ra.vercel.app'], // Frontend ve Vercel adresleri
+    methods: ['GET', 'POST', 'PUT', 'DELETE', "PATCH", "OPTIONS", "HEAD", "CONNECT", "TRACE"],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
 }));
 
 // Mongoose deprecation warning'i kaldır
@@ -20,8 +21,21 @@ mongoose.set('strictQuery', false);
 // Middleware
 app.use(bodyParser.json());
 
+// Swagger UI options
+const swaggerOptions = {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "SA-RA Tour Guide API",
+    customfavIcon: "/favicon.ico",
+    swaggerOptions: {
+        persistAuthorization: true,
+        displayRequestDuration: true,
+        docExpansion: 'none',
+        filter: true
+    }
+};
+
 // Swagger UI
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, swaggerOptions));
 
 // MongoDB Atlas bağlantısı
 let MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/messagingApp';

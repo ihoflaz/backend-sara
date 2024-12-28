@@ -24,5 +24,8 @@
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",
     "twilio": "^4.19.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 }

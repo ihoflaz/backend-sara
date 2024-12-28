@@ -4,7 +4,7 @@ const options = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'SA-RA API',
+            title: 'SA-RA Tour Guide API',
             version: '2.0.0',
             description: 'Bluetooth mesajlaşma ve grup yönetimi için RESTful API',
             contact: {
@@ -14,12 +14,12 @@ const options = {
         },
         servers: [
             {
-                url: 'http://localhost:5001',
-                description: 'Geliştirme sunucusu'
-            },
-            {
-                url: 'https://backend-sa-ra.vercel.app',
-                description: 'Production sunucusu'
+                url: process.env.NODE_ENV === 'production' 
+                    ? 'https://backend-sa-ra.vercel.app'
+                    : 'http://localhost:5001',
+                description: process.env.NODE_ENV === 'production' 
+                    ? 'Production sunucusu' 
+                    : 'Geliştirme sunucusu'
             }
         ],
         components: {
@@ -35,7 +35,7 @@ const options = {
             bearerAuth: []
         }]
     },
-    apis: ['./routes/*.js'] // Tüm route dosyalarını tara
+    apis: ['./routes/*.js']
 };
 
 const specs = swaggerJsdoc(options);
