@@ -24,24 +24,34 @@ app.use(bodyParser.json());
 // Serve static files from public directory
 app.use(express.static('public'));
 
-// Swagger UI setup
-const swaggerUiOptions = {
-    explorer: true,
+// Swagger UI static files
+const swaggerUiAssetPath = require('swagger-ui-dist').getAbsoluteFSPath();
+app.use('/api-docs', express.static(swaggerUiAssetPath, {
+    setHeaders: (res, path) => {
+        if (path.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css');
+        } else if (path.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript');
+        }
+    }
+}));
+
+// Swagger UI options
+const swaggerOptions = {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "SA-RA Tour Guide API",
     swaggerOptions: {
-        url: '/swagger.json',
-        persistAuthorization: true
+        persistAuthorization: true,
+        displayRequestDuration: true,
+        docExpansion: 'none',
+        filter: true,
+        tryItOutEnabled: true
     }
 };
 
-// Serve swagger.json
-app.get('/swagger.json', (req, res) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.send(swaggerSpecs);
-});
-
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve);
-app.get('/api-docs', swaggerUi.setup(swaggerSpecs, swaggerUiOptions));
+app.get('/api-docs', swaggerUi.setup(swaggerSpecs, swaggerOptions));
 
 // MongoDB Atlas bağlantısı
 let MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/messagingApp';
