@@ -14,8 +14,12 @@ const options = {
         },
         servers: [
             {
-                url: '/',
-                description: 'Mevcut sunucu'
+                url: 'https://backend-sara.vercel.app',
+                description: 'Production Server'
+            },
+            {
+                url: 'http://localhost:5001',
+                description: 'Development Server'
             }
         ],
         components: {
