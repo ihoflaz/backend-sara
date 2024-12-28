@@ -8,24 +8,28 @@
     ],
     "routes": [
         {
+            "src": "/api-docs",
+            "dest": "index.js"
+        },
+        {
             "src": "/api-docs/(.*)",
-            "dest": "/api-docs/$1"
+            "dest": "index.js"
         },
         {
             "src": "/swagger.json",
-            "dest": "/swagger.json"
+            "dest": "index.js"
         },
         {
             "src": "/api/(.*)",
-            "dest": "/index.js"
+            "dest": "index.js"
         },
         {
             "src": "/health",
-            "dest": "/index.js"
+            "dest": "index.js"
         },
         {
             "src": "/(.*)",
-            "dest": "/index.js"
+            "dest": "index.js"
         }
     ],
     "env": {

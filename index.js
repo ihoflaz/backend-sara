@@ -10,7 +10,8 @@ const app = express();
 // CORS ayarları
 const allowedOrigins = [
     'http://localhost:3002',
-    'https://backend-sara.vercel.app'
+    'https://backend-sara.vercel.app',
+    'https://sara-tour.vercel.app'
 ];
 
 app.use(cors({
