@@ -8,44 +8,34 @@
     ],
     "routes": [
         {
-            "src": "/api-docs/swagger-ui\\.css",
+            "src": "/api-docs/(.*)\\.css",
+            "dest": "index.js",
             "headers": {
-                "Content-Type": "text/css",
-                "Cache-Control": "public, max-age=31536000, immutable"
-            },
-            "dest": "index.js"
+                "Content-Type": "text/css; charset=utf-8"
+            }
         },
         {
-            "src": "/api-docs/swagger-ui-bundle\\.js",
+            "src": "/api-docs/(.*)\\.js",
+            "dest": "index.js",
             "headers": {
-                "Content-Type": "application/javascript",
-                "Cache-Control": "public, max-age=31536000, immutable"
-            },
-            "dest": "index.js"
-        },
-        {
-            "src": "/api-docs/swagger-ui-standalone-preset\\.js",
-            "headers": {
-                "Content-Type": "application/javascript",
-                "Cache-Control": "public, max-age=31536000, immutable"
-            },
-            "dest": "index.js"
+                "Content-Type": "application/javascript; charset=utf-8"
+            }
         },
         {
             "src": "/api-docs/(.*)",
+            "dest": "index.js",
             "headers": {
                 "Access-Control-Allow-Origin": "*",
                 "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
                 "Access-Control-Allow-Headers": "X-Requested-With, Content-Type, Authorization"
-            },
-            "dest": "index.js"
+            }
         },
         {
             "src": "/swagger.json",
+            "dest": "index.js",
             "headers": {
                 "Content-Type": "application/json"
-            },
-            "dest": "index.js"
+            }
         },
         {
             "src": "/api/(.*)",
