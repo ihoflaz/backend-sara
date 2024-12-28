@@ -21,6 +21,18 @@ mongoose.set('strictQuery', false);
 // Middleware
 app.use(bodyParser.json());
 
+// Swagger UI static files
+const swaggerUiAssetPath = require('swagger-ui-dist').getAbsoluteFSPath();
+app.use('/api-docs', express.static(swaggerUiAssetPath, {
+    setHeaders: (res, path) => {
+        if (path.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css');
+        } else if (path.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript');
+        }
+    }
+}));
+
 // Swagger UI options
 const swaggerOptions = {
     customCss: '.swagger-ui .topbar { display: none }',
@@ -34,16 +46,7 @@ const swaggerOptions = {
     }
 };
 
-// Serve swagger docs
-app.get('/swagger.json', (req, res) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.send(swaggerSpecs);
-});
-
-// Serve Swagger UI static files
-app.use('/api-docs', express.static(require('swagger-ui-dist').getAbsoluteFSPath()));
-
-// Swagger UI
+// Swagger UI setup
 app.use('/api-docs', swaggerUi.serve);
 app.get('/api-docs', swaggerUi.setup(swaggerSpecs, swaggerOptions));
 
