@@ -2,174 +2,276 @@
 
 ## Genel Bakış
 
-Bu uygulama, tur grupları için offline-first bir mesajlaşma sistemi sağlar. Kullanıcılar Bluetooth üzerinden mesajlaşabilir ve internet bağlantısı olduğunda veriler sunucuyla senkronize edilir.
+Bu uygulama, turistik gezilerde rehber ve turist kafilesi arasında internet bağımsız iletişimi sağlayan bir mesajlaşma sistemidir. Kullanıcılar Bluetooth üzerinden grup mesajlaşması yapabilir ve internet bağlantısı olduğunda veriler otomatik olarak sunucuyla senkronize edilir.
 
-## Temel Bileşenler
+## Temel Özellikler
 
-1. **Kullanıcı Yönetimi**
-   - JWT tabanlı kimlik doğrulama
-   - SMS doğrulaması
-   - Rol tabanlı yetkilendirme (kullanıcı, rehber, admin)
+1. **Kullanıcı Rolleri**
+   - Admin: Rehber atama yetkisi
+   - Guide (Rehber): Grup oluşturma ve kullanıcı davet etme yetkisi
+   - User: Yalnızca davet edildiği gruplarda mesajlaşma yetkisi
 
-2. **Grup Yönetimi**
-   - Rehberler grup oluşturabilir
-   - Kullanıcıları gruplara davet edebilir
-   - Grup detaylarını görüntüleyebilir
-
-3. **Mesajlaşma**
-   - Bluetooth üzerinden yerel mesajlaşma
-   - Offline veri depolama
-   - Sunucu senkronizasyonu
+2. **Mesajlaşma Özellikleri**
+   - Bluetooth üzerinden grup mesajlaşması
+   - Offline veri depolama ve senkronizasyon
+   - Yalnızca grup bazlı mesajlaşma (özel mesajlaşma yok)
+   - Konum paylaşımı
+   - Medya paylaşımı (resim, dosya)
 
 ## Teknik Gereksinimler
 
-1. **Framework'ler**
-   ```swift
-   import CoreData          // Yerel veri depolama
-   import MultipeerConnectivity  // Bluetooth mesajlaşma
-   import CoreLocation      // Konum servisleri
-   import Network          // Ağ durumu takibi
-   ```
-
-2. **Minimum iOS Sürümü**
-   - iOS 14.0+
-
-3. **Gerekli İzinler**
-   ```xml
-   <!-- Info.plist -->
-   <key>NSBluetoothAlwaysUsageDescription</key>
-   <string>Bluetooth mesajlaşma için gerekli</string>
-   <key>NSLocalNetworkUsageDescription</key>
-   <string>Yakındaki kullanıcılarla mesajlaşma için gerekli</string>
-   <key>NSLocationWhenInUseUsageDescription</key>
-   <string>Konum paylaşımı için gerekli</string>
-   ```
-
-## Veri Modelleri
-
-### CoreData Modelleri
-
-1. **Message.swift**
+### 1. Framework'ler ve Kütüphaneler
 ```swift
-class Message: NSManagedObject {
-    @NSManaged var localId: String          // Benzersiz yerel ID
-    @NSManaged var content: String          // Mesaj içeriği
-    @NSManaged var type: String            // text, image, location, file
-    @NSManaged var senderId: String         // Gönderen ID
-    @NSManaged var groupId: String          // Grup ID
-    @NSManaged var sentAt: Date            // Gönderim zamanı
-    @NSManaged var status: String          // sent, delivered, read, failed
-    @NSManaged var syncedAt: Date?         // Senkronizasyon zamanı
-    @NSManaged var metadata: Data?         // JSON formatında ek bilgiler
-    
-    // Metadata yardımcı metodları
-    var locationData: LocationMetadata? {
-        get {
-            guard type == "location",
-                  let data = metadata else { return nil }
-            return try? JSONDecoder().decode(LocationMetadata.self, from: data)
-        }
-        set {
-            metadata = try? JSONEncoder().encode(newValue)
-        }
-    }
+// Core Frameworks
+import SwiftUI           // UI Framework
+import CoreBluetooth    // Bluetooth iletişimi
+import MultipeerConnectivity  // P2P iletişim
+import CoreData         // Yerel veritabanı
+import Alamofire        // Network istekleri
+
+// Optional Frameworks
+import CoreLocation     // Konum servisleri
+import Network         // Ağ durumu takibi
+```
+
+### 2. Minimum Gereksinimler
+- iOS 14.0+
+- Bluetooth 4.0+ destekli cihaz
+- Xcode 13.0+
+- Swift 5.5+
+
+### 3. Gerekli İzinler (Info.plist)
+```xml
+<!-- Bluetooth İzinleri -->
+<key>NSBluetoothAlwaysUsageDescription</key>
+<string>Grup mesajlaşması için Bluetooth erişimi gereklidir</string>
+<key>NSBluetoothPeripheralUsageDescription</key>
+<string>Yakındaki grup üyeleriyle mesajlaşmak için gereklidir</string>
+
+<!-- Yerel Ağ İzinleri -->
+<key>NSLocalNetworkUsageDescription</key>
+<string>Yakındaki kullanıcılarla mesajlaşma için gereklidir</string>
+
+<!-- Konum İzinleri -->
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>Konum paylaşımı için gereklidir</string>
+```
+
+## MVVM Mimarisi
+
+### 1. Core Data Models
+
+#### User.xcdatamodeld
+```swift
+// User Entity
+entity User {
+    @NSManaged var id: String
+    @NSManaged var phoneNumber: String
+    @NSManaged var firstName: String
+    @NSManaged var lastName: String
+    @NSManaged var role: String // "admin", "guide", "user"
+    @NSManaged var isVerified: Bool
+    @NSManaged var deviceId: String?
+    @NSManaged var groups: NSSet? // İlişki: TourGroup
 }
 
-struct LocationMetadata: Codable {
-    let latitude: Double
-    let longitude: Double
-    let address: String?
+extension User {
+    static func fetchRequest() -> NSFetchRequest<User> {
+        return NSFetchRequest<User>(entityName: "User")
+    }
 }
 ```
 
-2. **TourGroup.swift**
+#### TourGroup.xcdatamodeld
 ```swift
-class TourGroup: NSManagedObject {
+// TourGroup Entity
+entity TourGroup {
     @NSManaged var id: String
     @NSManaged var name: String
     @NSManaged var guideId: String
-    @NSManaged var members: Set<Member>
     @NSManaged var isActive: Bool
     @NSManaged var startDate: Date?
     @NSManaged var endDate: Date?
     @NSManaged var lastSyncTime: Date?
+    @NSManaged var members: NSSet? // İlişki: User
+    @NSManaged var messages: NSSet? // İlişki: Message
 }
-```
 
-## Bluetooth Mesajlaşma
-
-### 1. MultipeerConnectivity Yöneticisi
-```swift
-class BluetoothManager: NSObject {
-    static let shared = BluetoothManager()
-    private let serviceType = "tour-chat"
-    private let myPeerId: MCPeerID
-    private let session: MCSession
-    private let advertiser: MCNearbyServiceAdvertiser
-    private let browser: MCNearbyServiceBrowser
-    
-    private override init() {
-        // Benzersiz cihaz kimliği
-        let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
-        myPeerId = MCPeerID(displayName: deviceId)
-        
-        // Oturum ve servis ayarları
-        session = MCSession(peer: myPeerId, securityIdentity: nil, encryptionPreference: .required)
-        advertiser = MCNearbyServiceAdvertiser(peer: myPeerId, discoveryInfo: nil, serviceType: serviceType)
-        browser = MCNearbyServiceBrowser(peer: myPeerId, serviceType: serviceType)
-        
-        super.init()
-        
-        session.delegate = self
-        advertiser.delegate = self
-        browser.delegate = self
-    }
-    
-    // Bluetooth servislerini başlat
-    func startServices() {
-        advertiser.startAdvertisingPeer()
-        browser.startBrowsingForPeers()
-    }
-    
-    // Bluetooth servislerini durdur
-    func stopServices() {
-        advertiser.stopAdvertisingPeer()
-        browser.stopBrowsingForPeers()
-        session.disconnect()
+extension TourGroup {
+    static func fetchRequest() -> NSFetchRequest<TourGroup> {
+        return NSFetchRequest<TourGroup>(entityName: "TourGroup")
     }
 }
 ```
 
-### 2. Mesaj Gönderme ve Alma
+#### Message.xcdatamodeld
 ```swift
-extension BluetoothManager {
-    // Mesaj gönderme
-    func sendMessage(_ message: Message, to peers: [MCPeerID]) {
+// Message Entity
+entity Message {
+    @NSManaged var localId: String
+    @NSManaged var serverId: String?
+    @NSManaged var groupId: String
+    @NSManaged var senderId: String
+    @NSManaged var content: String
+    @NSManaged var type: String // "text", "image", "location"
+    @NSManaged var status: String // "sent", "delivered", "read"
+    @NSManaged var sentAt: Date
+    @NSManaged var syncedAt: Date?
+    @NSManaged var metadata: Data? // JSON formatında ek bilgiler
+    @NSManaged var group: TourGroup? // İlişki: TourGroup
+    @NSManaged var sender: User? // İlişki: User
+    
+    var isSync: Bool {
+        return serverId != nil
+    }
+}
+
+extension Message {
+    static func fetchRequest() -> NSFetchRequest<Message> {
+        return NSFetchRequest<Message>(entityName: "Message")
+    }
+}
+```
+
+### 2. ViewModels
+
+#### AuthViewModel
+```swift
+class AuthViewModel: ObservableObject {
+    @Published var isAuthenticated = false
+    @Published var currentUser: User?
+    private let authService: AuthService
+    private let context: NSManagedObjectContext
+    
+    func sendVerificationCode(phoneNumber: String) async throws {
+        // SMS doğrulama kodu gönderme
+    }
+    
+    func verifyCode(_ code: String) async throws {
+        // Doğrulama kodunu kontrol etme ve kullanıcıyı CoreData'ya kaydetme
+        try await context.perform {
+            let user = User(context: self.context)
+            // Kullanıcı bilgilerini doldur
+            try self.context.save()
+        }
+    }
+}
+```
+
+#### GroupViewModel
+```swift
+class GroupViewModel: ObservableObject {
+    @Published var groups: [TourGroup] = []
+    private let groupService: GroupService
+    private let context: NSManagedObjectContext
+    
+    // CoreData'dan grupları yükle
+    func loadGroups() {
+        let request = TourGroup.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(key: "startDate", ascending: false)]
+        
         do {
-            let messageData = try JSONEncoder().encode(message)
-            try session.send(messageData, toPeers: peers, with: .reliable)
-            
-            // Yerel veritabanına kaydet
-            CoreDataManager.shared.saveMessage(message)
+            groups = try context.fetch(request)
         } catch {
-            print("Mesaj gönderme hatası:", error)
-            message.status = "failed"
-            CoreDataManager.shared.saveContext()
+            print("Grup yükleme hatası:", error)
         }
     }
     
-    // Mesaj alma
-    func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
+    func createGroup(name: String, members: [String]) async throws {
+        // 1. API'ye grup oluşturma isteği gönder
+        // 2. Başarılı olursa CoreData'ya kaydet
+        try await context.perform {
+            let group = TourGroup(context: self.context)
+            // Grup bilgilerini doldur
+            try self.context.save()
+        }
+    }
+}
+```
+
+#### ChatViewModel
+```swift
+class ChatViewModel: ObservableObject {
+    @Published var messages: [Message] = []
+    private let messageService: MessageService
+    private let bluetoothManager: BluetoothManager
+    private let context: NSManagedObjectContext
+    
+    // CoreData'dan mesajları yükle
+    func loadMessages(for groupId: String) {
+        let request = Message.fetchRequest()
+        request.predicate = NSPredicate(format: "groupId == %@", groupId)
+        request.sortDescriptors = [NSSortDescriptor(key: "sentAt", ascending: true)]
+        
         do {
-            let message = try JSONDecoder().decode(Message.self, from: data)
-            
-            // Yerel veritabanına kaydet
-            DispatchQueue.main.async {
-                CoreDataManager.shared.saveMessage(message)
-                NotificationCenter.default.post(name: .newMessageReceived, object: message)
-            }
+            messages = try context.fetch(request)
         } catch {
-            print("Mesaj alma hatası:", error)
+            print("Mesaj yükleme hatası:", error)
+        }
+    }
+    
+    func sendMessage(_ content: String, in group: TourGroup) async throws {
+        try await context.perform {
+            // 1. CoreData'da mesaj oluştur
+            let message = Message(context: self.context)
+            message.localId = UUID().uuidString
+            message.content = content
+            message.groupId = group.id
+            message.sentAt = Date()
+            
+            // 2. Kaydet
+            try self.context.save()
+            
+            // 3. Bluetooth ile gönder
+            try await self.bluetoothManager.sendMessage(message, in: group)
+            
+            // 4. İnternet varsa sunucuya gönder
+            if NetworkMonitor.shared.isConnected {
+                try await self.syncMessage(message)
+            }
+        }
+    }
+}
+```
+
+## Bluetooth İletişimi
+
+### BluetoothManager
+```swift
+class BluetoothManager: NSObject {
+    private let serviceType = "tour-chat"
+    private var session: MCSession?
+    private var advertiser: MCNearbyServiceAdvertiser?
+    private var browser: MCNearbyServiceBrowser?
+    private let context: NSManagedObjectContext
+    
+    func startServices() {
+        // Bluetooth servislerini başlat
+        setupSession()
+        startAdvertising()
+        startBrowsing()
+    }
+    
+    func sendMessage(_ message: Message, in group: TourGroup) async throws {
+        // 1. Mesajı JSON'a dönüştür
+        let encoder = JSONEncoder()
+        let data = try encoder.encode(message)
+        
+        // 2. Gruptaki diğer üyelere gönder
+        try session?.send(data, toPeers: session?.connectedPeers ?? [], with: .reliable)
+    }
+}
+
+extension BluetoothManager: MCSessionDelegate {
+    func session(_ session: MCSession, didReceive data: Data, fromPeer: MCPeerID) {
+        // 1. Gelen veriyi Message objesine dönüştür
+        guard let message = try? JSONDecoder().decode(Message.self, from: data) else { return }
+        
+        // 2. CoreData'ya kaydet
+        context.perform {
+            let newMessage = Message(context: self.context)
+            // Mesaj bilgilerini doldur
+            try? self.context.save()
         }
     }
 }
@@ -177,68 +279,44 @@ extension BluetoothManager {
 
 ## Veri Senkronizasyonu
 
-### 1. Senkronizasyon Yöneticisi
+### SyncManager
 ```swift
 class SyncManager {
-    static let shared = SyncManager()
+    private let context: NSManagedObjectContext
+    private let apiClient: APIClient
     private let networkMonitor = NWPathMonitor()
-    private var syncTimer: Timer?
     
-    private init() {
-        setupNetworkMonitoring()
-    }
-    
-    // Ağ durumu izleme
-    private func setupNetworkMonitoring() {
+    func startMonitoring() {
         networkMonitor.pathUpdateHandler = { [weak self] path in
             if path.status == .satisfied {
-                self?.syncMessages()
-            }
-        }
-        networkMonitor.start(queue: DispatchQueue.global())
-    }
-    
-    // Periyodik senkronizasyon
-    func startPeriodicSync() {
-        syncTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
-            self?.syncMessages()
-        }
-    }
-}
-```
-
-### 2. Mesaj Senkronizasyonu
-```swift
-extension SyncManager {
-    func syncMessages() {
-        // İnternet bağlantısı kontrolü
-        guard NetworkReachability.shared.isConnected else { return }
-        
-        // Senkronize edilmemiş mesajları al
-        let unsyncedMessages = CoreDataManager.shared.fetchUnsyncedMessages()
-        
-        guard !unsyncedMessages.isEmpty else { return }
-        
-        // API'ye gönder
-        APIClient.shared.syncMessages(unsyncedMessages) { result in
-            switch result {
-            case .success(let response):
-                self.handleSyncSuccess(response)
-            case .failure(let error):
-                self.handleSyncError(error)
+                self?.syncPendingData()
             }
         }
     }
     
-    private func handleSyncSuccess(_ response: SyncResponse) {
-        CoreDataManager.shared.performBackgroundTask { context in
-            for result in response.syncedMessages {
-                if let message = context.message(withLocalId: result.localMessageId) {
-                    message.syncedAt = response.syncTime
-                    message.status = "sent"
-                }
+    private func syncPendingData() async {
+        let request = Message.fetchRequest()
+        request.predicate = NSPredicate(format: "serverId == nil")
+        
+        do {
+            let messages = try context.fetch(request)
+            for message in messages {
+                try await syncMessage(message)
             }
-            try? context.save()
+        } catch {
+            print("Senkronizasyon hatası:", error)
+        }
+    }
+    
+    private func syncMessage(_ message: Message) async throws {
+        // 1. API'ye gönder
+        let response = try await apiClient.syncMessages([message])
+        
+        // 2. Başarılı yanıt gelirse CoreData'yı güncelle
+        try await context.perform {
+            message.serverId = response.messageId
+            message.syncedAt = Date()
+            try self.context.save()
         }
     }
 }
@@ -246,218 +324,88 @@ extension SyncManager {
 
 ## Hata Yönetimi
 
-### 1. Ağ Hataları
 ```swift
-enum NetworkError: Error {
-    case noInternet
-    case serverError(String)
+enum AppError: Error {
+    case bluetoothUnavailable
+    case networkError(String)
     case authenticationError
+    case syncError(String)
+    case coreDataError(String)
     
     var localizedDescription: String {
         switch self {
-        case .noInternet:
-            return "İnternet bağlantısı yok"
-        case .serverError(let message):
-            return "Sunucu hatası: \(message)"
-        case .authenticationError:
-            return "Oturum süresi doldu"
-        }
-    }
-}
-
-class ErrorHandler {
-    static func handle(_ error: Error) {
-        switch error {
-        case NetworkError.noInternet:
-            // Mesajları yerel olarak sakla
-            continueOfflineMode()
-            
-        case NetworkError.authenticationError:
-            // Yeniden giriş yap
-            refreshTokenAndRetry()
-            
-        case NetworkError.serverError:
-            // Hatayı logla ve kullanıcıyı bilgilendir
-            logError(error)
-            showErrorAlert(error)
-            
-        default:
-            // Genel hata
-            showErrorAlert(error)
-        }
-    }
-}
-```
-
-### 2. Bluetooth Hataları
-```swift
-enum BluetoothError: Error {
-    case notAvailable
-    case connectionLost
-    case peerNotFound
-    
-    var localizedDescription: String {
-        switch self {
-        case .notAvailable:
+        case .bluetoothUnavailable:
             return "Bluetooth kullanılamıyor"
-        case .connectionLost:
-            return "Bağlantı koptu"
-        case .peerNotFound:
-            return "Eşleşen cihaz bulunamadı"
-        }
-    }
-}
-
-extension BluetoothManager {
-    func handleConnectionError(_ error: BluetoothError) {
-        switch error {
-        case .connectionLost:
-            // Yeniden bağlanmayı dene
-            retryConnection()
-            
-        case .notAvailable:
-            // Kullanıcıyı bilgilendir
-            showBluetoothAlert()
-            
-        case .peerNotFound:
-            // Yakındaki cihazları tara
-            startBrowsingForPeers()
+        case .networkError(let message):
+            return "Ağ hatası: \(message)"
+        case .authenticationError:
+            return "Oturum hatası"
+        case .syncError(let message):
+            return "Senkronizasyon hatası: \(message)"
+        case .coreDataError(let message):
+            return "Veritabanı hatası: \(message)"
         }
     }
 }
 ```
 
-## Güvenlik
+## API İstekleri (Alamofire)
 
-### 1. Veri Güvenliği
+### APIClient
 ```swift
-class SecurityManager {
-    // JWT token yönetimi
-    static func saveToken(_ token: String) {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: "jwt_token",
-            kSecValueData as String: token.data(using: .utf8)!
-        ]
-        SecItemAdd(query as CFDictionary, nil)
-    }
+class APIClient {
+    private let baseURL = "https://backend-sara.vercel.app/api"
     
-    // Hassas veri şifreleme
-    static func encryptMessage(_ message: String) -> Data? {
-        guard let data = message.data(using: .utf8) else { return nil }
-        return try? CryptoKit.AES.GCM.seal(data, using: symmetricKey).combined
-    }
-}
-```
-
-### 2. Bluetooth Güvenliği
-```swift
-extension BluetoothManager {
-    // Peer kimlik doğrulama
-    func session(_ session: MCSession, didReceiveCertificate certificate: [Any]?, fromPeer peerID: MCPeerID, certificateHandler: @escaping (Bool) -> Void) {
-        // Sertifika kontrolü
-        if let cert = certificate?.first as? SecCertificate {
-            validatePeerCertificate(cert)
-            certificateHandler(true)
-        } else {
-            certificateHandler(false)
+    func syncMessages(_ messages: [Message]) async throws -> SyncResponse {
+        let parameters = messages.map { message in
+            return [
+                "localId": message.localId,
+                "groupId": message.groupId,
+                "content": message.content,
+                "type": message.type,
+                "sentAt": ISO8601DateFormatter().string(from: message.sentAt)
+            ]
         }
-    }
-}
-```
-
-## Test Önerileri
-
-1. **Offline Testler**
-```swift
-class OfflineTests {
-    func testMessageStorage() {
-        // İnternet bağlantısını kapat
-        NetworkReachability.shared.simulateOffline()
         
-        // Test mesajı gönder
-        let message = Message(content: "Test mesajı")
-        messageManager.sendMessage(message)
-        
-        // Yerel veritabanını kontrol et
-        let savedMessage = CoreDataManager.shared.fetchMessage(withLocalId: message.localId)
-        XCTAssertNotNil(savedMessage)
+        return try await AF.request(
+            "\(baseURL)/messages/sync",
+            method: .post,
+            parameters: ["messages": parameters],
+            encoding: JSONEncoding.default
+        ).serializingDecodable(SyncResponse.self).value
     }
 }
 ```
 
-2. **Bluetooth Testler**
-```swift
-class BluetoothTests {
-    func testPeerDiscovery() {
-        // Bluetooth servisini başlat
-        BluetoothManager.shared.startServices()
-        
-        // Yakındaki cihazları kontrol et
-        XCTAssertTrue(BluetoothManager.shared.peers.count > 0)
-    }
-}
-```
+## Test Stratejisi
 
-## Örnek Kullanım
+1. **Unit Tests**
+   - ViewModel testleri
+   - CoreData CRUD işlemleri testleri
+   - Bluetooth mesaj gönderme/alma testleri
 
-### 1. Mesaj Gönderme
-```swift
-// Text mesajı
-func sendTextMessage(_ text: String, in group: TourGroup) {
-    let message = Message(context: viewContext)
-    message.localId = UUID().uuidString
-    message.content = text
-    message.type = "text"
-    message.groupId = group.id
-    message.senderId = currentUser.id
-    message.sentAt = Date()
-    message.status = "pending"
-    
-    // Bluetooth ile gönder
-    BluetoothManager.shared.sendMessage(message)
-}
+2. **Integration Tests**
+   - CoreData ve Bluetooth entegrasyon testleri
+   - API senkronizasyon testleri
 
-// Konum mesajı
-func sendLocationMessage(_ coordinate: CLLocationCoordinate2D, in group: TourGroup) {
-    let message = Message(context: viewContext)
-    message.localId = UUID().uuidString
-    message.type = "location"
-    message.groupId = group.id
-    
-    let metadata = LocationMetadata(
-        latitude: coordinate.latitude,
-        longitude: coordinate.longitude
-    )
-    message.metadata = try? JSONEncoder().encode(metadata)
-    
-    // Bluetooth ile gönder
-    BluetoothManager.shared.sendMessage(message)
-}
-```
+3. **UI Tests**
+   - Temel kullanıcı akışı testleri
+   - Offline/Online durum geçiş testleri
 
-### 2. Mesaj Alma ve Gösterme
-```swift
-class ChatViewController: UIViewController {
-    private var messages: [Message] = []
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        setupMessageObserver()
-    }
-    
-    private func setupMessageObserver() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleNewMessage),
-            name: .newMessageReceived,
-            object: nil
-        )
-    }
-    
-    @objc private func handleNewMessage(_ notification: Notification) {
-        guard let message = notification.object as? Message else { return }
-        messages.append(message)
-        updateUI()
-    }
-} 
+## Performans İpuçları
+
+1. **CoreData Optimizasyonu**
+   - NSFetchedResultsController kullan
+   - Batch işlemleri için NSBatchDeleteRequest ve NSBatchUpdateRequest kullan
+   - İndeksler ekle
+   - Gereksiz ilişkileri fetch etme
+
+2. **Bluetooth Optimizasyonu**
+   - Mesaj boyutlarını küçük tut
+   - Gereksiz taramaları engelle
+   - Bağlantı kopması durumunda otomatik yeniden bağlan
+
+3. **Batarya Optimizasyonu**
+   - Bluetooth tarama aralıklarını optimize et
+   - Arka plan senkronizasyonunu akıllıca yönet
+   - Konum servislerini gerektiğinde kullan 
