@@ -278,3 +278,191 @@ const notificationExample = {
     isRead: false
 };
 ```
+
+## SystemLog Model
+
+Sistem loglarını tutan model.
+
+```typescript
+interface SystemLog {
+  // Log Bilgileri
+  level: 'info' | 'warning' | 'error' | 'critical';  // Zorunlu
+  category: 'system' | 'auth' | 'database' | 'api' | 'bluetooth' | 'notification';  // Zorunlu
+  message: string;       // Zorunlu
+  details?: object;      // Opsiyonel, detaylı hata bilgisi
+  source: string;        // Log kaynağı (servis/fonksiyon adı)
+  
+  // Çözüm Bilgileri
+  resolved: boolean;     // Varsayılan: false
+  resolvedAt?: Date;    // Çözüldüğü zaman
+  resolvedBy?: string;  // User referansı
+  resolution?: string;  // Çözüm açıklaması
+  
+  // Zaman Bilgileri
+  createdAt: Date;      // Varsayılan: Date.now
+  updatedAt: Date;      // Varsayılan: Date.now
+}
+
+// İndeksler
+systemLogSchema.index({ level: 1, category: 1 });
+systemLogSchema.index({ resolved: 1 });
+systemLogSchema.index({ createdAt: 1 });
+
+// Örnek Kullanım:
+const logExample = {
+  level: "error",
+  category: "bluetooth",
+  message: "Bluetooth bağlantısı başarısız",
+  details: { 
+    deviceId: "device123",
+    errorCode: "BT_CONN_FAILED"
+  },
+  source: "BluetoothService.connect",
+  resolved: false,
+  createdAt: new Date()
+};
+```
+
+## SystemSetting Model
+
+Sistem ayarlarını tutan model.
+
+```typescript
+interface SystemSetting {
+  // Ayar Bilgileri
+  key: string;          // Zorunlu, Benzersiz
+  value: any;           // Zorunlu, herhangi bir tip olabilir
+  category: 'general' | 'security' | 'notification' | 'performance' | 'maintenance';  // Zorunlu
+  description: string;  // Ayarın açıklaması
+  
+  // Değişiklik Bilgileri
+  updatedBy: string;    // User referansı
+  updatedAt: Date;      // Varsayılan: Date.now
+}
+
+// İndeksler
+systemSettingSchema.index({ key: 1 }, { unique: true });
+systemSettingSchema.index({ category: 1 });
+
+// Örnek Kullanım:
+const settingExample = {
+  key: "maxGroupSize",
+  value: 100,
+  category: "general",
+  description: "Bir gruptaki maksimum üye sayısı",
+  updatedBy: "admin_user_id",
+  updatedAt: new Date()
+};
+```
+
+## ResponseMetric Model
+
+API yanıt metriklerini tutan model.
+
+```typescript
+interface ResponseMetric {
+  // İstek Bilgileri
+  endpoint: string;     // API endpoint'i
+  method: string;       // HTTP metodu
+  statusCode: number;   // HTTP durum kodu
+  
+  // Performans Metrikleri
+  responseTime: number; // Milisaniye cinsinden yanıt süresi
+  requestSize: number;  // Byte cinsinden istek boyutu
+  responseSize: number; // Byte cinsinden yanıt boyutu
+  
+  // İstemci Bilgileri
+  userAgent: string;    // İstemci bilgisi
+  ipAddress: string;    // İstemci IP adresi
+  
+  // Zaman Bilgisi
+  timestamp: Date;      // Varsayılan: Date.now
+}
+
+// İndeksler
+responseMetricSchema.index({ endpoint: 1, timestamp: 1 });
+responseMetricSchema.index({ statusCode: 1 });
+responseMetricSchema.index({ timestamp: 1 });
+
+// Örnek Kullanım:
+const metricExample = {
+  endpoint: "/api/groups",
+  method: "GET",
+  statusCode: 200,
+  responseTime: 150,
+  requestSize: 1024,
+  responseSize: 5120,
+  userAgent: "Mozilla/5.0...",
+  ipAddress: "192.168.1.1",
+  timestamp: new Date()
+};
+```
+
+## ErrorLog Model
+
+Uygulama hatalarını detaylı şekilde tutan model.
+
+```typescript
+interface ErrorLog {
+  // Hata Bilgileri
+  name: string;         // Hata adı
+  message: string;      // Hata mesajı
+  stack?: string;       // Hata stack trace
+  code?: string;        // Hata kodu
+  
+  // Bağlam Bilgileri
+  context: {
+    endpoint?: string;  // Hata oluştuğunda çağrılan endpoint
+    method?: string;    // HTTP metodu
+    params?: object;    // İstek parametreleri
+    userId?: string;    // Kullanıcı ID'si
+    deviceInfo?: {      // Cihaz bilgileri
+      platform: string;
+      version: string;
+      deviceId?: string;
+    }
+  };
+  
+  // Durum Bilgileri
+  severity: 'low' | 'medium' | 'high' | 'critical';  // Hata önceliği
+  status: 'new' | 'investigating' | 'resolved' | 'ignored';  // Varsayılan: 'new'
+  
+  // Çözüm Bilgileri
+  resolution?: {
+    resolvedBy?: string;  // User referansı
+    resolvedAt?: Date;    // Çözüm zamanı
+    notes?: string;       // Çözüm notları
+  };
+  
+  // Zaman Bilgileri
+  createdAt: Date;      // Varsayılan: Date.now
+  updatedAt: Date;      // Varsayılan: Date.now
+}
+
+// İndeksler
+errorLogSchema.index({ severity: 1, status: 1 });
+errorLogSchema.index({ 'context.endpoint': 1 });
+errorLogSchema.index({ createdAt: 1 });
+
+// Örnek Kullanım:
+const errorExample = {
+  name: "ValidationError",
+  message: "Geçersiz grup adı",
+  stack: "Error: Geçersiz grup adı\n    at validateGroup...",
+  code: "INVALID_GROUP_NAME",
+  context: {
+    endpoint: "/api/groups",
+    method: "POST",
+    params: { name: "" },
+    userId: "user123",
+    deviceInfo: {
+      platform: "ios",
+      version: "15.0",
+      deviceId: "device123"
+    }
+  },
+  severity: "medium",
+  status: "new",
+  createdAt: new Date()
+};
+```

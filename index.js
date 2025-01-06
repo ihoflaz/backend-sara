@@ -6,10 +6,14 @@ const cors = require('cors');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('./swagger');
 const app = express();
+const favicon = require('serve-favicon');
+const path = require('path');
 
 // CORS ayarları
 const allowedOrigins = [
+    'http://localhost:3000',
     'http://localhost:3002',
+    'http://localhost:5001',
     'https://backend-sara.vercel.app',
     'https://sara-tour.vercel.app'
 ];
@@ -78,6 +82,9 @@ app.get('/swagger.json', (req, res) => {
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve);
 app.get('/api-docs', swaggerUi.setup(swaggerSpecs, swaggerOptions));
+
+// Favicon middleware
+app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 
 // MongoDB Atlas bağlantısı
 let MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/messagingApp';

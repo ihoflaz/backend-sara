@@ -3,9 +3,68 @@ Bu proje bir iOS uygulamasının backendi olacaktır. Backend'de ExpressJS ve Mo
 Backendi geliştirirken frontendciler için /docs klasörü altında dokümanlar oluşturuyoruz. Tüm yazılım ekibi öğrenci olduğu için dokümanlar ne kadar ayrıntılı, eksiksiz ve kaliteli olursa bizim için o kadar iyi olacaktır.
 /routes kalsörü altındaki tüm Route'ların ve tüm endpointlerin API.md dosyasında olduğundan emin ol.
 /models kalsörü altındaki tüm modellerin modellerin eksiksiz bir şekilde MODELS.md dosyasında olduğundan emin ol.
-/routes klasörü altındaki tüm enpointlerin eksik yazıldığından emin ol.
+/routes klasörü altındaki tüm enpointlerin eksiksiz yazıldığından emin ol.
 /routes klasörü altındaki tüm endpoinlerin yukarıda anlattığım senaryoya uygun olduğundan emin ol.
 /routes klasörü altındaki tüm endpoinlerin swaggerUI kodlarının tam olduğundan emin ol.
 yapılan her düzenlemeden sonra /docs klasörü altındaki dokümanlara eklememiz gereken veya düzenlememiz gereken bir şey olup olmadığından emin ol.
 /docs klasörü altındaki API.md dosyası bizim için tek başına bir API dokümanı gibi olmalıdır. Yani içinde endpointler ve bu enpointlere nasıl istek yapılacağı hakkında detaylı bilgi mutlaka olmalıdır.
 /docs kalsörü altındaki IOS_INTEGRATION.md dokümanına da iOS geliştiriciler için ayrıntılı bir doküman olması gerekiyor. Bu dokümanın da her zaman güncel ve diğer dosyalarla çakışmadığından emin ol.
+Eklenen tüm kodlar için MongoDB'de yapılması gereken işlemler varsa bunları bana ayrıntılı bir şekilde söyle.
+Admin panelini geliştirirken projenin genel yapısını bozmamaya dikkat et.
+Admin paneli için gerekli tüm adımları ekleteceğiz, aşağıda admin paneli için gerekli olan özellikleri ve adımları listeledim;
+    Mevcut durumda admin panelinde şu özellikler bulunuyor:
+        Kullanıcı listesi görüntüleme
+        Kullanıcı durumu güncelleme (aktif/bloke)
+        Rehber listesi görüntüleme
+        Rehber durumu güncelleme
+
+    İstenen özelliklere göre eksik olan kısımları şöyle listeleyebiliriz:
+        Kullanıcı Yönetimi için Eklenecekler:
+        Kullanıcı arama ve filtreleme özellikleri
+        Detaylı kullanıcı bilgisi görüntüleme endpoint'i
+        Kullanıcı rolü değiştirme endpoint'i
+        Kullanıcı istatistikleri endpoint'i
+    Rehber Yönetimi için Eklenecekler:
+        Rehber onaylama sistemi endpoint'leri
+        Rehber performans istatistikleri endpoint'i
+        Rehberlerin gruplarını görüntüleme endpoint'i
+        Rehber raporları endpoint'i
+    Grup Yönetimi için Eklenecekler:
+        Tüm grupları listeleme ve filtreleme endpoint'i
+        Grup detayları endpoint'i
+        Grup durumu değiştirme endpoint'i
+        Grup üye yönetimi endpoint'leri
+        Grup istatistikleri endpoint'i
+    İstatistikler ve Raporlama için Eklenecekler:
+        Genel sistem istatistikleri endpoint'i
+        Kullanıcı aktivite raporları endpoint'i
+        Grup aktivite raporları endpoint'i
+        Mesaj istatistikleri endpoint'i
+        Dönemsel raporlar endpoint'i
+    5. Sistem Yönetimi için Eklenecekler:
+        Sistem durumu izleme endpoint'i
+        Hata logları görüntüleme endpoint'i
+        Performans metrikleri endpoint'i
+        Bildirim yönetimi endpoint'leri
+        Sistem ayarları endpoint'leri
+    İmplementasyon Planımız bu şekilde olacak:
+        Öncelikli Geliştirmeler (1. Faz):
+            Kullanıcı yönetimi endpoint'lerinin tamamlanması
+            Rehber onaylama sisteminin kurulması
+            Temel grup yönetimi endpoint'lerinin eklenmesi
+        İkincil Geliştirmeler (2. Faz):
+            İstatistik ve raporlama altyapısının kurulması
+            Performans metriklerinin eklenmesi
+            Bildirim sisteminin entegrasyonu
+        Son Faz (3. Faz):
+            Sistem yönetimi özelliklerinin eklenmesi
+            Detaylı raporlama özelliklerinin eklenmesi
+            Hata izleme ve loglama sisteminin geliştirilmesi
+    Her bir endpoint için şunları yapmalıyız:
+        Route tanımlaması
+        Swagger dokümantasyonu
+        Gerekli middleware'lerin eklenmesi
+        Error handling
+        API.md ve IOS_INTEGRATION.md dokümanlarının güncellenmesi
+
+    Admin paneline ekleyeceğimiz her bir özellik için detaylı implementasyon planı çıkar.

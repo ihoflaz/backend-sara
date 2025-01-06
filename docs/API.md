@@ -894,3 +894,1070 @@ Tüm endpoint'ler için olası hata durumları:
     "error": "Hata detayı"  // Sadece development ortamında gönderilir
 }
 ```
+
+## Admin Endpoints
+
+### Kullanıcı Yönetimi
+
+#### GET /api/admin/users
+Tüm kullanıcıları listeler ve filtreleme imkanı sunar.
+
+**Query Parameters:**
+- `search` (string, optional): İsim, soyisim veya telefon numarasına göre arama
+- `role` (string, optional): Rol filtreleme (user, guide, admin)
+- `status` (string, optional): Durum filtreleme (active, blocked)
+- `page` (integer, default: 1): Sayfa numarası
+- `limit` (integer, default: 20, max: 100): Sayfa başına kayıt sayısı
+
+**Response:**
+```json
+{
+    "success": true,
+    "users": [
+        {
+            "_id": "string",
+            "phoneNumber": "string",
+            "firstName": "string",
+            "lastName": "string",
+            "email": "string",
+            "role": "string",
+            "status": "string",
+            "createdAt": "date"
+        }
+    ],
+    "pagination": {
+        "total": "integer",
+        "page": "integer",
+        "pages": "integer",
+        "limit": "integer"
+    }
+}
+```
+
+#### GET /api/admin/users/{userId}
+Belirli bir kullanıcının detaylı bilgilerini görüntüler.
+
+**Path Parameters:**
+- `userId` (string, required): Kullanıcı ID'si
+
+**Response:**
+```json
+{
+    "success": true,
+    "user": {
+        "_id": "string",
+        "phoneNumber": "string",
+        "firstName": "string",
+        "lastName": "string",
+        "email": "string",
+        "role": "string",
+        "status": "string",
+        "createdAt": "date",
+        "updatedAt": "date",
+        "lastLogin": "date",
+        "blockReason": "string"
+    }
+}
+```
+
+#### PATCH /api/admin/users/{userId}/role
+Kullanıcının rolünü günceller.
+
+**Path Parameters:**
+- `userId` (string, required): Kullanıcı ID'si
+
+**Request Body:**
+```json
+{
+    "role": "string" // Possible values: user, guide, admin
+}
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "user": {
+        "_id": "string",
+        "role": "string",
+        "updatedAt": "date"
+    }
+}
+```
+
+#### PATCH /api/admin/users/{userId}/status
+Kullanıcının durumunu günceller.
+
+**Path Parameters:**
+- `userId` (string, required): Kullanıcı ID'si
+
+**Request Body:**
+```json
+{
+    "status": "string", // Possible values: active, blocked
+    "reason": "string"  // Required when status is blocked
+}
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "user": {
+        "_id": "string",
+        "status": "string",
+        "updatedAt": "date"
+    }
+}
+```
+
+### Rehber Yönetimi
+
+#### GET /api/admin/guides/pending
+Onay bekleyen rehberleri listeler.
+
+**Query Parameters:**
+- `page` (integer, default: 1): Sayfa numarası
+- `limit` (integer, default: 20, max: 100): Sayfa başına kayıt sayısı
+
+**Response:**
+```json
+{
+    "success": true,
+    "guides": [
+        {
+            "_id": "string",
+            "firstName": "string",
+            "lastName": "string",
+            "phoneNumber": "string",
+            "email": "string",
+            "status": "string",
+            "guideInfo": {
+                "experience": "number",
+                "languages": ["string"],
+                "certifications": ["string"]
+            },
+            "createdAt": "date"
+        }
+    ],
+    "pagination": {
+        "total": "integer",
+        "page": "integer",
+        "pages": "integer",
+        "limit": "integer"
+    }
+}
+```
+
+#### POST /api/admin/guides/{guideId}/approve
+Rehber başvurusunu onaylar.
+
+**Path Parameters:**
+- `guideId` (string, required): Rehber ID'si
+
+**Response:**
+```json
+{
+    "success": true,
+    "guide": {
+        "_id": "string",
+        "approvalStatus": "string",
+        "updatedAt": "date"
+    }
+}
+```
+
+#### POST /api/admin/guides/{guideId}/reject
+Rehber başvurusunu reddeder.
+
+**Path Parameters:**
+- `guideId` (string, required): Rehber ID'si
+
+**Request Body:**
+```json
+{
+    "reason": "string" // Ret sebebi
+}
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "guide": {
+        "_id": "string",
+        "approvalStatus": "string",
+        "updatedAt": "date"
+    }
+}
+```
+
+### Grup Yönetimi
+
+#### GET /api/admin/groups
+Tüm grupları listeler ve filtreleme imkanı sunar.
+
+**Query Parameters:**
+- `search` (string, optional): Grup adına göre arama
+- `guideId` (string, optional): Rehbere göre filtreleme
+- `status` (string, optional): Durum filtreleme (active, inactive)
+- `page` (integer, default: 1): Sayfa numarası
+- `limit` (integer, default: 20, max: 100): Sayfa başına kayıt sayısı
+
+**Response:**
+```json
+{
+    "success": true,
+    "groups": [
+        {
+            "_id": "string",
+            "name": "string",
+            "description": "string",
+            "guide": {
+                "_id": "string",
+                "firstName": "string",
+                "lastName": "string"
+            },
+            "memberCount": "integer",
+            "status": "string",
+            "createdAt": "date"
+        }
+    ],
+    "pagination": {
+        "total": "integer",
+        "page": "integer",
+        "pages": "integer",
+        "limit": "integer"
+    }
+}
+```
+
+#### GET /api/admin/groups/{groupId}
+Belirli bir grubun detaylı bilgilerini görüntüler.
+
+**Path Parameters:**
+- `groupId` (string, required): Grup ID'si
+
+**Response:**
+```json
+{
+    "success": true,
+    "group": {
+        "_id": "string",
+        "name": "string",
+        "description": "string",
+        "guide": {
+            "_id": "string",
+            "firstName": "string",
+            "lastName": "string",
+            "phoneNumber": "string",
+            "email": "string"
+        },
+        "members": [
+            {
+                "_id": "string",
+                "firstName": "string",
+                "lastName": "string",
+                "phoneNumber": "string"
+            }
+        ],
+        "status": "string",
+        "createdAt": "date",
+        "updatedAt": "date"
+    }
+}
+```
+
+#### PATCH /api/admin/groups/{groupId}/status
+Grubun durumunu günceller.
+
+**Path Parameters:**
+- `groupId` (string, required): Grup ID'si
+
+**Request Body:**
+```json
+{
+    "status": "string", // Possible values: active, inactive
+    "reason": "string"  // Required when status is inactive
+}
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "group": {
+        "_id": "string",
+        "status": "string",
+        "updatedAt": "date"
+    }
+}
+```
+
+### İstatistik ve Raporlama Endpoint'leri
+
+#### GET /api/admin/statistics/system
+Genel sistem istatistiklerini getirir.
+
+**Query Parameters:**
+- `startDate` (string, optional): Başlangıç tarihi (YYYY-MM-DD formatında)
+- `endDate` (string, optional): Bitiş tarihi (YYYY-MM-DD formatında)
+
+**Response:**
+```json
+{
+    "success": true,
+    "statistics": {
+        "totalUsers": "integer",
+        "activeUsers": "integer",
+        "totalGuides": "integer",
+        "activeGuides": "integer",
+        "totalGroups": "integer",
+        "activeGroups": "integer",
+        "totalMessages": "integer",
+        "averageGroupSize": "number",
+        "averageMessagesPerGroup": "number",
+        "dailyActiveUsers": "integer",
+        "monthlyActiveUsers": "integer"
+    }
+}
+```
+
+#### GET /api/admin/reports/activity
+Belirli bir tarih aralığı için detaylı aktivite raporu oluşturur.
+
+**Query Parameters:**
+- `startDate` (string, required): Başlangıç tarihi (YYYY-MM-DD formatında)
+- `endDate` (string, required): Bitiş tarihi (YYYY-MM-DD formatında)
+- `type` (string, optional): Rapor periyodu (daily, weekly, monthly)
+
+**Response:**
+```json
+{
+    "success": true,
+    "report": [
+        {
+            "date": "date",
+            "newUsers": "integer",
+            "activeUsers": "integer",
+            "newGroups": "integer",
+            "totalMessages": "integer",
+            "activeGroups": "integer"
+        }
+    ]
+}
+```
+
+#### GET /api/admin/metrics/performance
+Sistemin genel performans metriklerini ve sağlık durumunu getirir.
+
+**Response:**
+```json
+{
+    "success": true,
+    "metrics": {
+        "responseTime": {
+            "average": "number", // Son 5 dakikadaki ortalama yanıt süresi (ms)
+            "current": "number", // Mevcut istek yanıt süresi (ms)
+            "max": "number",     // Son 5 dakikadaki maksimum yanıt süresi (ms)
+            "min": "number"      // Son 5 dakikadaki minimum yanıt süresi (ms)
+        },
+        "memoryUsage": {
+            "total": "number",   // Toplam bellek (MB)
+            "used": "number",    // Kullanılan bellek (MB)
+            "free": "number"     // Boş bellek (MB)
+        },
+        "databaseMetrics": {
+            "connections": "number",      // Aktif veritabanı bağlantı sayısı
+            "activeQueries": "number",    // Aktif sorgu sayısı
+            "averageQueryTime": "number"  // Ortalama sorgu süresi
+        },
+        "systemLoad": {
+            "current": "number", // Anlık sistem yükü
+            "average": "number"  // Ortalama sistem yükü (son 5 dakika)
+        },
+        "uptime": "number"      // Sistem çalışma süresi (saniye)
+    }
+}
+```
+
+### Bildirim Yönetimi
+
+#### POST /api/admin/notifications
+Sistem bildirimi gönderir.
+
+**Request Body:**
+```json
+{
+    "recipients": ["string"], // Opsiyonel. Boş bırakılırsa tüm kullanıcılara gönderilir
+    "title": "string",
+    "message": "string",
+    "type": "string", // system_alert, guide_approval, guide_rejection, user_block, user_unblock
+    "expiresIn": "number" // Saat cinsinden, varsayılan: 720 (30 gün)
+}
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "sentCount": "integer"
+}
+```
+
+#### GET /api/admin/notifications
+Bildirimleri listeler.
+
+**Query Parameters:**
+- `type` (string, optional): Bildirim tipi filtresi
+- `startDate` (string, optional): Başlangıç tarihi (YYYY-MM-DD formatında)
+- `endDate` (string, optional): Bitiş tarihi (YYYY-MM-DD formatında)
+- `page` (integer, default: 1): Sayfa numarası
+- `limit` (integer, default: 20): Sayfa başına kayıt sayısı
+
+**Response:**
+```json
+{
+    "success": true,
+    "notifications": [
+        {
+            "_id": "string",
+            "type": "string",
+            "title": "string",
+            "message": "string",
+            "recipient": {
+                "_id": "string",
+                "firstName": "string",
+                "lastName": "string"
+            },
+            "isRead": "boolean",
+            "createdAt": "date",
+            "expiresAt": "date"
+        }
+    ],
+    "pagination": {
+        "total": "integer",
+        "page": "integer",
+        "pages": "integer",
+        "limit": "integer"
+    }
+}
+```
+
+#### DELETE /api/admin/notifications/{notificationId}
+Bildirimi siler.
+
+**Path Parameters:**
+- `notificationId` (string, required): Bildirim ID'si
+
+**Response:**
+```json
+{
+    "success": true
+}
+```
+
+### Sistem Yönetimi
+
+#### GET /api/admin/system/logs
+Sistem loglarını filtreler ve listeler.
+
+**Query Parameters:**
+- `level` (string, optional): Log seviyesi filtresi (info, warning, error, critical)
+- `category` (string, optional): Log kategorisi filtresi (system, auth, database, api, bluetooth, notification)
+- `startDate` (string, optional): Başlangıç tarihi (YYYY-MM-DD formatında)
+- `endDate` (string, optional): Bitiş tarihi (YYYY-MM-DD formatında)
+- `resolved` (boolean, optional): Çözülmüş/çözülmemiş log filtresi
+- `page` (integer, default: 1): Sayfa numarası
+- `limit` (integer, default: 20): Sayfa başına kayıt sayısı
+
+**Response:**
+```json
+{
+    "success": true,
+    "logs": [
+        {
+            "_id": "string",
+            "level": "string",
+            "category": "string",
+            "message": "string",
+            "details": "object",
+            "source": "string",
+            "timestamp": "date",
+            "resolved": "boolean",
+            "resolvedAt": "date",
+            "resolvedBy": {
+                "_id": "string",
+                "firstName": "string",
+                "lastName": "string"
+            },
+            "resolution": "string"
+        }
+    ],
+    "pagination": {
+        "total": "integer",
+        "page": "integer",
+        "pages": "integer",
+        "limit": "integer"
+    }
+}
+```
+
+#### PATCH /api/admin/system/logs/{logId}/resolve
+Sistem logunu çözüldü olarak işaretler.
+
+**Path Parameters:**
+- `logId` (string, required): Log ID'si
+
+**Request Body:**
+```json
+{
+    "resolution": "string" // Çözüm açıklaması
+}
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "log": {
+        "_id": "string",
+        "resolved": "boolean",
+        "resolvedAt": "date",
+        "resolution": "string"
+    }
+}
+```
+
+#### GET /api/admin/system/settings
+Sistem ayarlarını kategorilere göre getirir.
+
+**Query Parameters:**
+- `category` (string, optional): Ayar kategorisi filtresi (general, security, notification, performance, maintenance)
+
+**Response:**
+```json
+{
+    "success": true,
+    "settings": [
+        {
+            "key": "string",
+            "value": "object",
+            "category": "string",
+            "description": "string",
+            "updatedAt": "date",
+            "updatedBy": {
+                "_id": "string",
+                "firstName": "string",
+                "lastName": "string"
+            }
+        }
+    ]
+}
+```
+
+#### PATCH /api/admin/system/settings/{key}
+Sistem ayarının değerini günceller.
+
+**Path Parameters:**
+- `key` (string, required): Ayar anahtarı
+
+**Request Body:**
+```json
+{
+    "value": "object" // Ayarın yeni değeri
+}
+```
+
+**Response:**
+```json
+{
+    "success": true,
+    "setting": {
+        "key": "string",
+        "value": "object",
+        "updatedAt": "date"
+    }
+}
+```
+
+## Performans Metrikleri
+
+### Sistem Metrikleri
+
+**Endpoint:** `GET /api/admin/metrics/system`
+
+Sistem performans metriklerini getirir.
+
+**Yetkilendirme:** Admin token gerekli
+
+**Başarılı Yanıt:**
+```json
+{
+    "success": true,
+    "data": {
+        "system": {
+            "uptime": 123456,
+            "memory": {
+                "total": 8589934592,
+                "free": 4294967296,
+                "used": 4294967296,
+                "usagePercentage": 50
+            },
+            "cpu": {
+                "loadAverage": [1.5, 1.2, 0.9],
+                "cores": 8
+            },
+            "platform": "darwin",
+            "arch": "x64"
+        },
+        "mongodb": {
+            "status": "connected",
+            "collections": 10,
+            "connectionPoolSize": 5
+        }
+    }
+}
+```
+
+### Uygulama Metrikleri
+
+**Endpoint:** `GET /api/admin/metrics/application`
+
+Uygulama kullanım metriklerini getirir.
+
+**Yetkilendirme:** Admin token gerekli
+
+**Başarılı Yanıt:**
+```json
+{
+    "success": true,
+    "data": {
+        "users": {
+            "total": 1000,
+            "active": 500,
+            "activePercentage": 50
+        },
+        "groups": {
+            "total": 100,
+            "active": 80,
+            "activePercentage": 80
+        },
+        "messages": {
+            "daily": 5000,
+            "weekly": 30000,
+            "averagePerDay": 4285.71
+        },
+        "bluetooth": {
+            "successRate": 98.5,
+            "total": 1000,
+            "success": 985
+        }
+    }
+}
+```
+
+### Hata Metrikleri
+
+**Endpoint:** `GET /api/admin/metrics/errors`
+
+Sistem hata metriklerini getirir.
+
+**Yetkilendirme:** Admin token gerekli
+
+**Başarılı Yanıt:**
+```json
+{
+    "success": true,
+    "data": {
+        "summary": {
+            "total": 100,
+            "unresolved": 20
+        },
+        "byLevel": [
+            {
+                "_id": "error",
+                "categories": [
+                    {
+                        "category": "bluetooth",
+                        "count": 30,
+                        "unresolvedCount": 5
+                    },
+                    {
+                        "category": "database",
+                        "count": 20,
+                        "unresolvedCount": 3
+                    }
+                ],
+                "totalCount": 50,
+                "totalUnresolved": 8
+            }
+        ],
+        "commonErrors": [
+            {
+                "message": "Bluetooth bağlantı hatası",
+                "count": 25,
+                "category": "bluetooth",
+                "level": "error",
+                "lastOccurrence": "2024-01-20T10:30:00Z"
+            }
+        ]
+    }
+}
+```
+
+## Admin Panel API Endpoints
+
+### Metrik İşlemleri
+
+1. **Sistem Metrikleri**
+```http
+GET /api/admin/metrics/system
+Auth: Bearer Token (Admin)
+
+Response (200 OK):
+{
+    "success": true,
+    "metrics": {
+        "system": {
+            "uptime": 123456,
+            "memory": {
+                "total": 16000000000,
+                "free": 8000000000,
+                "used": 8000000000,
+                "usagePercentage": 50
+            },
+            "cpu": {
+                "loadAverage": [1.5, 1.2, 1.0],
+                "cores": 8
+            },
+            "platform": "darwin",
+            "arch": "x64"
+        },
+        "mongodb": {
+            "status": "connected",
+            "collections": 10,
+            "connectionPoolSize": 5
+        }
+    }
+}
+```
+
+2. **Uygulama Metrikleri**
+```http
+GET /api/admin/metrics/application
+Auth: Bearer Token (Admin)
+
+Response (200 OK):
+{
+    "success": true,
+    "metrics": {
+        "users": {
+            "total": 1000,
+            "active": 800,
+            "dailyActive": 200,
+            "monthlyActive": 600
+        },
+        "groups": {
+            "total": 50,
+            "active": 30
+        },
+        "messages": {
+            "daily": 5000,
+            "weekly": 30000
+        },
+        "bluetooth": {
+            "successRate": 95.5
+        }
+    }
+}
+```
+
+3. **Hata Metrikleri**
+```http
+GET /api/admin/metrics/errors
+Auth: Bearer Token (Admin)
+
+Response (200 OK):
+{
+    "success": true,
+    "metrics": {
+        "total": 100,
+        "unresolved": 20,
+        "byCategory": {
+            "bluetooth": 30,
+            "database": 20,
+            "api": 50
+        },
+        "byLevel": {
+            "error": 60,
+            "warning": 30,
+            "critical": 10
+        },
+        "mostCommon": [
+            {
+                "message": "Bluetooth connection failed",
+                "count": 25
+            }
+        ]
+    }
+}
+```
+
+### Sistem Yönetimi
+
+1. **Sistem Logları Listeleme**
+```http
+GET /api/admin/system/logs
+Auth: Bearer Token (Admin)
+
+Query Parameters:
+- level: string (info, warning, error, critical)
+- category: string (system, auth, database, api, bluetooth, notification)
+- startDate: string (ISO 8601)
+- endDate: string (ISO 8601)
+- resolved: boolean
+- page: number (default: 1)
+- limit: number (default: 20)
+
+Response (200 OK):
+{
+    "success": true,
+    "logs": [
+        {
+            "_id": "logId",
+            "level": "error",
+            "category": "bluetooth",
+            "message": "Connection failed",
+            "details": {},
+            "source": "BluetoothService",
+            "timestamp": "2024-01-15T10:00:00.000Z",
+            "resolved": false
+        }
+    ],
+    "pagination": {
+        "total": 100,
+        "page": 1,
+        "pages": 5,
+        "limit": 20
+    }
+}
+```
+
+2. **Log Çözüldü Olarak İşaretleme**
+```http
+PATCH /api/admin/system/logs/{logId}/resolve
+Auth: Bearer Token (Admin)
+
+Request:
+{
+    "resolution": "Sorun çözüldü açıklaması"
+}
+
+Response (200 OK):
+{
+    "success": true,
+    "log": {
+        "_id": "logId",
+        "resolved": true,
+        "resolvedAt": "2024-01-15T10:00:00.000Z",
+        "resolution": "Sorun çözüldü açıklaması"
+    }
+}
+```
+
+3. **Sistem Ayarları Listeleme**
+```http
+GET /api/admin/system/settings
+Auth: Bearer Token (Admin)
+
+Query Parameters:
+- category: string (general, security, notification, performance, maintenance)
+
+Response (200 OK):
+{
+    "success": true,
+    "settings": [
+        {
+            "key": "maxGroupSize",
+            "value": 100,
+            "category": "general",
+            "description": "Maksimum grup üye sayısı",
+            "updatedAt": "2024-01-15T10:00:00.000Z"
+        }
+    ]
+}
+```
+
+4. **Sistem Ayarı Güncelleme**
+```http
+PATCH /api/admin/system/settings/{key}
+Auth: Bearer Token (Admin)
+
+Request:
+{
+    "value": "yeni_değer"
+}
+
+Response (200 OK):
+{
+    "success": true,
+    "setting": {
+        "key": "maxGroupSize",
+        "value": "yeni_değer",
+        "updatedAt": "2024-01-15T10:00:00.000Z"
+    }
+}
+```
+
+### Bildirim Yönetimi
+
+1. **Bildirim Gönderme**
+```http
+POST /api/admin/notifications
+Auth: Bearer Token (Admin)
+
+Request:
+{
+    "recipients": ["userId1", "userId2"],  // Boş bırakılırsa tüm kullanıcılara gönderilir
+    "title": "Bildirim Başlığı",
+    "message": "Bildirim Mesajı",
+    "type": "system_alert",  // system_alert, guide_approval, guide_rejection, user_block, user_unblock
+    "expiresIn": 720  // Saat cinsinden, varsayılan: 720 (30 gün)
+}
+
+Response (200 OK):
+{
+    "success": true,
+    "sentCount": 2
+}
+```
+
+2. **Bildirimleri Listeleme**
+```http
+GET /api/admin/notifications
+Auth: Bearer Token (Admin)
+
+Query Parameters:
+- type: string
+- startDate: string (ISO 8601)
+- endDate: string (ISO 8601)
+- page: number (default: 1)
+- limit: number (default: 20)
+
+Response (200 OK):
+{
+    "success": true,
+    "notifications": [
+        {
+            "_id": "notificationId",
+            "type": "system_alert",
+            "title": "Bildirim Başlığı",
+            "message": "Bildirim Mesajı",
+            "recipient": {
+                "_id": "string",
+                "firstName": "string",
+                "lastName": "string"
+            },
+            "isRead": false,
+            "createdAt": "date",
+            "expiresAt": "date"
+        }
+    ],
+    "pagination": {
+        "total": "integer",
+        "page": "integer",
+        "pages": "integer",
+        "limit": "integer"
+    }
+}
+```
+
+### Raporlama
+
+1. **Aktivite Raporu**
+```http
+GET /api/admin/reports/activity
+Auth: Bearer Token (Admin)
+
+Query Parameters:
+- startDate: string (ISO 8601) (Zorunlu)
+- endDate: string (ISO 8601) (Zorunlu)
+- type: string (daily, weekly, monthly)
+
+Response (200 OK):
+{
+    "success": true,
+    "report": [
+        {
+            "date": "2024-01-15T00:00:00.000Z",
+            "newUsers": 50,
+            "activeUsers": 200,
+            "newGroups": 5,
+            "totalMessages": 1000,
+            "activeGroups": 30
+        }
+    ]
+}
+```
+
+2. **Kullanıcı Aktivite Raporu**
+```http
+GET /api/admin/reports/user-activity
+Auth: Bearer Token (Admin)
+
+Query Parameters:
+- userId: string (Zorunlu)
+- startDate: string (ISO 8601)
+- endDate: string (ISO 8601)
+
+Response (200 OK):
+{
+    "success": true,
+    "report": {
+        "user": {
+            "_id": "userId",
+            "firstName": "Ahmet",
+            "lastName": "Yılmaz"
+        },
+        "totalGroups": 10,
+        "activeGroups": 5,
+        "totalMessages": 500,
+        "lastLoginAt": "2024-01-15T10:00:00.000Z",
+        "completedTours": 5,
+        "totalTimeInSystem": 30  // Gün cinsinden
+    }
+}
+```
+
+3. **Grup Aktivite Raporu**
+```http
+GET /api/admin/reports/group-activity
+Auth: Bearer Token (Admin)
+
+Query Parameters:
+- groupId: string (Zorunlu)
+- startDate: string (ISO 8601)
+- endDate: string (ISO 8601)
+
+Response (200 OK):
+{
+    "success": true,
+    "report": {
+        "group": {
+            "_id": "groupId",
+            "name": "Grup Adı"
+        },
+        "totalMembers": 50,
+        "activeMembers": 30,
+        "totalMessages": 1000,
+        "messagesByDate": [
+            {
+                "date": "2024-01-15",
+                "count": 100
+            }
+        ],
+        "lastActivityAt": "2024-01-15T10:00:00.000Z"
+    }
+}
+```

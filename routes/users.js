@@ -575,4 +575,238 @@ router.post('/device-token', verifyToken, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/users:
+ *   get:
+ *     summary: Kullanıcıları listele
+ *     description: Tüm kullanıcıları filtreli bir şekilde listeler
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: İsim, soyisim veya telefon ile arama
+ *       - in: query
+ *         name: role
+ *         schema:
+ *           type: string
+ *           enum: [user, guide, admin]
+ *         description: Kullanıcı rolü filtresi
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [active, blocked]
+ *         description: Kullanıcı durumu filtresi
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Sayfa numarası
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Sayfa başına kayıt sayısı
+ *     responses:
+ *       200:
+ *         description: Başarılı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 users:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/User'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     pages:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ */
+router.get('/', verifyToken, async (req, res) => {
+    try {
+        const { search = '', role = '', status = '', page = 1, limit = 10 } = req.query;
+        
+        // Filtre oluşturma
+        const filter = {};
+        
+        if (search) {
+            filter.$or = [
+                { firstName: { $regex: search, $options: 'i' } },
+                { lastName: { $regex: search, $options: 'i' } },
+                { phoneNumber: { $regex: search, $options: 'i' } }
+            ];
+        }
+        
+        if (role) {
+            filter.role = role;
+        }
+        
+        if (status) {
+            filter.status = status;
+        }
+
+        // Toplam kayıt sayısı
+        const total = await User.countDocuments(filter);
+        
+        // Sayfalama
+        const users = await User.find(filter)
+            .select('-refreshToken -__v')
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit);
+
+        res.json({
+            success: true,
+            users,
+            pagination: {
+                total,
+                page: parseInt(page),
+                pages: Math.ceil(total / limit),
+                limit: parseInt(limit)
+            }
+        });
+    } catch (error) {
+        console.error('Kullanıcı listeleme hatası:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Kullanıcılar listelenirken bir hata oluştu',
+            error: error.message
+        });
+    }
+});
+
+/**
+ * @swagger
+ * /api/users/{userId}/status:
+ *   post:
+ *     summary: Kullanıcı durumunu güncelle
+ *     description: Kullanıcının aktif/bloke durumunu değiştirir
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Kullanıcı ID'si
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [active, blocked]
+ *               reason:
+ *                 type: string
+ *                 description: Bloke edilme sebebi
+ *     responses:
+ *       200:
+ *         description: Başarılı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ */
+router.post('/:userId/status', verifyToken, async (req, res) => {
+    try {
+        // Admin yetkisi kontrolü
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                message: 'Bu işlem için admin yetkisi gereklidir'
+            });
+        }
+
+        const { userId } = req.params;
+        const { status, reason } = req.body;
+
+        // Status kontrolü
+        if (!['active', 'blocked'].includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Geçersiz durum değeri'
+            });
+        }
+
+        // Kullanıcı kontrolü
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'Kullanıcı bulunamadı'
+            });
+        }
+
+        // Kendini bloke etmeyi engelle
+        if (user._id.toString() === req.user.id) {
+            return res.status(403).json({
+                success: false,
+                message: 'Kendinizi bloke edemezsiniz'
+            });
+        }
+
+        // Durumu güncelle
+        user.status = status;
+        if (status === 'blocked' && reason) {
+            user.blockReason = reason;
+        } else if (status === 'active') {
+            user.blockReason = undefined;
+        }
+
+        await user.save();
+
+        res.json({
+            success: true,
+            user: {
+                _id: user._id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                phoneNumber: user.phoneNumber,
+                email: user.email,
+                role: user.role,
+                status: user.status,
+                blockReason: user.blockReason
+            }
+        });
+    } catch (error) {
+        console.error('Kullanıcı durumu güncelleme hatası:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Kullanıcı durumu güncellenirken bir hata oluştu',
+            error: error.message
+        });
+    }
+});
+
 module.exports = router;
